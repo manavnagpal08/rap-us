@@ -8,6 +8,7 @@ import 'package:rap_app/screens/settings_screen.dart';
 import 'package:rap_app/screens/contractor_dashboard.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
+import 'package:rap_app/screens/chat_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -56,6 +57,7 @@ class _MainScreenState extends State<MainScreen> {
       : [
           const HomeScreen(),
           const HistoryScreen(),
+          const ChatListScreen(), // Added
           const MarketplaceScreen(),
           if (isAdmin) const AdminScreen(),
         ];
@@ -129,8 +131,9 @@ class _MainScreenState extends State<MainScreen> {
                 : [
                     _navItem(0, Icons.add_a_photo_outlined, 'New Estimate'),
                     _navItem(1, Icons.history_rounded, 'History'),
-                    _navItem(2, Icons.storefront_outlined, 'Contractors'),
-                    if (isAdmin) _navItem(3, Icons.admin_panel_settings_outlined, 'Admin Panel'),
+                    _navItem(2, Icons.chat_bubble_outline_rounded, 'Messages'), // Added
+                    _navItem(3, Icons.storefront_outlined, 'Contractors'),
+                    if (isAdmin) _navItem(4, Icons.admin_panel_settings_outlined, 'Admin Panel'),
                   ],
             ),
           ),

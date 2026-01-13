@@ -40,4 +40,11 @@ class ChatService {
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
+  // Stream users chats
+  Stream<QuerySnapshot> getUserChats(String userId) {
+    return _db.collection('chats')
+      .where('participants', arrayContains: userId)
+      .orderBy('lastTimestamp', descending: true)
+      .snapshots();
+  }
 }

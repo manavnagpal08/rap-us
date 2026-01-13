@@ -82,8 +82,8 @@ class JobTrackingScreen extends StatelessWidget {
                        crossAxisAlignment: CrossAxisAlignment.start,
                        children: [
                          Text('Contractor', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
-                         Text('John Doe', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
-                         Text('4.9 ★ (120 Jobs)', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.warning)),
+                         Text(job['contractorName'] ?? 'Assigned Contractor', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                         Text('Verified Pro', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.success)),
                        ],
                      ),
                    ),
