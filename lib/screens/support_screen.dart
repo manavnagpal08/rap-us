@@ -1,0 +1,321 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:rap_app/theme/app_theme.dart';
+
+class SupportScreen extends StatelessWidget {
+  const SupportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: Text('Support', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildAiAssistantCard(context),
+            const SizedBox(height: 24),
+            Text('RESOURCES', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1.5)),
+            const SizedBox(height: 16),
+            _buildSupportOption(
+              icon: Icons.menu_book_rounded,
+              title: 'Documentation',
+              subtitle: 'Guides on using RAP',
+              onTap: () {}, // Placeholder for docs
+            ),
+            const SizedBox(height: 16),
+            _buildSupportOption(
+              icon: Icons.mail_outline_rounded,
+              title: 'Contact Support',
+              subtitle: 'Get help from our team',
+              onTap: () async {
+                final Uri emailLaunchUri = Uri(
+                  scheme: 'mailto',
+                  path: 'support@rap.com',
+                  query: 'subject=Support Request',
+                );
+                if (await canLaunchUrl(emailLaunchUri)) {
+                   await launchUrl(emailLaunchUri);
+                }
+              },
+            ),
+          ].animate(interval: 100.ms).fadeIn().moveY(begin: 20, end: 0, curve: Curves.easeOutQuart),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiAssistantCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 32),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Smart Help Assistant',
+            style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Ask me about estimates, image scanning, or costs. I\'m here to help instantly.',
+            style: GoogleFonts.inter(fontSize: 15, color: Colors.white.withOpacity(0.8), height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () => _showChatDialog(context),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.primary),
+              label: Text('Open Help Chat', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSupportOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+             borderRadius: BorderRadius.circular(16),
+             border: Border.all(color: Colors.transparent),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppTheme.primary, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(subtitle, style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 13)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showChatDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const _SimpleChatDialog(),
+    );
+  }
+}
+
+class _SimpleChatDialog extends StatefulWidget {
+  const _SimpleChatDialog();
+
+  @override
+  State<_SimpleChatDialog> createState() => __SimpleChatDialogState();
+}
+
+class __SimpleChatDialogState extends State<_SimpleChatDialog> {
+  final TextEditingController _controller = TextEditingController();
+  final List<Map<String, String>> _messages = [
+    {'role': 'assistant', 'content': 'Hello! I can help with using RAP. Ask me about creating estimates, scanning images, or checking costs.'}
+  ];
+  bool _isTyping = false;
+
+  void _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    
+    setState(() {
+      _messages.add({'role': 'user', 'content': text});
+      _controller.clear();
+      _isTyping = true;
+    });
+
+    // Simulated AI Response
+    await Future.delayed(const Duration(seconds: 1));
+    
+    String response = "I can help with that. Could you provide more details?";
+    final lower = text.toLowerCase();
+    
+    if (lower.contains('estimate') || lower.contains('create')) {
+        response = "To create an estimate, go to the 'New Estimate' tab, tap 'Upload Image', and follow the guided questions. I'll analyze the image and current market rates.";
+    } else if (lower.contains('scan') || lower.contains('image')) {
+        response = "Our AI scans your uploaded image to identify dimensions, materials, and damage. Ensure your photo is well-lit for the best accuracy.";
+    } else if (lower.contains('cost') || lower.contains('price')) {
+        response = "Costs are calculated based on your local area's labor rates and real-time material prices. We also apply a standard 20% labor discount automatically.";
+    } else if (lower.contains('labor') || lower.contains('discount')) {
+        response = "We apply a mandatory 20% discount on labor costs to ensure competitive pricing for every estimate generated.";
+    }
+
+    if (mounted) {
+      setState(() {
+        _isTyping = false;
+        _messages.add({'role': 'assistant', 'content': response});
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: AppTheme.accent),
+                  const SizedBox(width: 12),
+                  Text('Help Assistant', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(20),
+                itemCount: _messages.length + (_isTyping ? 1 : 0),
+                itemBuilder: (ctx, i) {
+                  if (i == _messages.length) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16).copyWith(topLeft: Radius.zero),
+                        ),
+                        child: const SizedBox(
+                          width: 40, 
+                          child: Center(child: Text('...', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold))),
+                        ),
+                      ),
+                    );
+                  }
+                  final msg = _messages[i];
+                  final isUser = msg['role'] == 'user';
+                  return Align(
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      constraints: const BoxConstraints(maxWidth: 280),
+                      decoration: BoxDecoration(
+                        color: isUser ? AppTheme.primary : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(16).copyWith(
+                          topRight: isUser ? Radius.zero : const Radius.circular(16),
+                          topLeft: isUser ? const Radius.circular(16) : Radius.zero,
+                        ),
+                      ),
+                      child: Text(
+                        msg['content']!,
+                        style: GoogleFonts.inter(color: isUser ? Colors.white : const Color(0xFF1E293B), height: 1.4),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: 'Ask a question...',
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FloatingActionButton(
+                    mini: true,
+                    onPressed: _sendMessage,
+                    backgroundColor: AppTheme.primary,
+                    child: const Icon(Icons.send_rounded, size: 18),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

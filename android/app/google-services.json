@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "730902812932",
+    "project_id": "rap-us-estimation",
+    "storage_bucket": "rap-us-estimation.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730902812932:android:e3b7e394fa56c8cc1cd851",
+        "android_client_info": {
+          "package_name": "com.rap.us.rap_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwRzUZrdirSTtxlNxZe6qWWZcUr5JDgqE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
