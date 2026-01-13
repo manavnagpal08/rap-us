@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/services/chat_service.dart';
 import 'package:rap_app/services/auth_service.dart'; // Import AuthService
 import 'package:rap_app/screens/chat_screen.dart';
-import 'package:rap_app/theme/app_theme.dart';
+import 'package:rap_app/screens/marketplace_screen.dart'; // Added import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
@@ -12,6 +14,7 @@ class ChatListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ChatService chatService = ChatService();
     final AuthService auth = AuthService(); // Instantiate AuthService
     final currentUser = auth.currentUser;
@@ -21,10 +24,10 @@ class ChatListScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.webBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: chatService.getUserChats(currentUser.uid),
@@ -33,57 +36,91 @@ class ChatListScreen extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                final docs = snapshot.data!.docs;
+                // Client-side sorting to fix missing index issue
+                docs.sort((a, b) {
+                  final tA = (a.data() as Map<String, dynamic>)['lastTimestamp'] as Timestamp?;
+                  final tB = (b.data() as Map<String, dynamic>)['lastTimestamp'] as Timestamp?;
+                  if (tA == null || tB == null) return 0;
+                  return tB.compareTo(tA);
+                });
+
+                if (docs.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_bubble_outline_rounded, size: 64, color: Colors.grey[300]),
-                        const SizedBox(height: 16),
-                        Text('No messages yet', style: GoogleFonts.outfit(fontSize: 18, color: Colors.grey[500])),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.mark_chat_unread_rounded, size: 64, color: Theme.of(context).colorScheme.primary),
+                        ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                        const SizedBox(height: 24),
+                        Text(l10n.noMessages, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.noMessagesSubtitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: Theme.of(context).hintColor, height: 1.5),
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MarketplaceScreen())),
+                          icon: const Icon(Icons.add_comment_rounded, size: 20),
+                          label: Text(l10n.startFirstChat),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 4,
+                            shadowColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                          ),
+                        ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                       ],
                     ),
                   );
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(24),
-                  itemCount: snapshot.data!.docs.length,
+                  padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 24 : 16),
+                  itemCount: docs.length,
                   itemBuilder: (context, index) {
-                    final chat = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                    final chat = docs[index].data() as Map<String, dynamic>;
                     final participants = List<String>.from(chat['participants'] ?? []);
                     final otherUserId = participants.firstWhere((id) => id != currentUser.uid, orElse: () => 'Unknown');
                     
-                    // In a real app, fetch user details (name/avatar) using otherUserId
-                    // For now, we'll try to extract it from the chat ID or use a placeholder if not stored
-                    // Ideally, store participantNames in the chat document
-                    String displayName = 'User';
-                    if (chat['participants'] != null && chat['participants'].contains(otherUserId)) {
-                         // Fallback logic or future implementation
-                         displayName = 'Chat Participant'; 
-                    }
+                    final displayNames = chat['displayNames'] as Map<String, dynamic>?;
+                    String displayName = displayNames?[otherUserId] ?? 'Chat Participant';
 
                     final Timestamp? ts = chat['lastTimestamp'] as Timestamp?;
-                    final time = ts != null ? DateFormat('MMM dd, hh:mm a').format(ts.toDate()) : '';
+                    final time = ts != null ? DateFormat('MMM dd').format(ts.toDate()) : '';
 
                     return Card(
                       elevation: 0,
                       margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey[200]!)),
+                      color: Theme.of(context).cardColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16), 
+                        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.05))
+                      ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         leading: CircleAvatar(
-                          backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-                          child: const Icon(Icons.person, color: AppTheme.primary),
+                          backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                          child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
                         ),
-                        title: Text(displayName, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                        title: Text(displayName, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                         subtitle: Text(
                           chat['lastMessage'] ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(color: Colors.grey[600]),
+                          style: GoogleFonts.inter(color: Theme.of(context).hintColor),
                         ),
-                        trailing: Text(time, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400])),
+                        trailing: Text(time, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor.withValues(alpha: 0.5))),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -107,26 +144,47 @@ class ChatListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
       ),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Messages',
-                style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primary),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.messages,
+                    style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                  ),
+                  Text(l10n.historySubtitle, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                ],
               ),
-              Text('Your conversations', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
-            ],
-          ),
-        ],
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MarketplaceScreen()));
+              },
+              icon: const Icon(Icons.add_comment_rounded, size: 18),
+              label: Text(l10n.startChat),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,104 +1,58 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import 'package:rap_app/services/database_service.dart';
-import 'package:rap_app/services/auth_service.dart';
-import 'package:rap_app/theme/app_theme.dart';
-import 'package:rap_app/screens/chat_screen.dart';
-
-class MarketplaceScreen extends StatelessWidget {
-  const MarketplaceScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final DatabaseService db = DatabaseService();
-
-    return Scaffold(
-      backgroundColor: AppTheme.webBg,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: db.getContractors(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final contractors = snapshot.data ?? [];
-
-                if (contractors.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(32),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 400,
-                    mainAxisSpacing: 24,
-                    crossAxisSpacing: 24,
-                    mainAxisExtent: 220,
-                  ),
-                  itemCount: contractors.length,
-                  itemBuilder: (context, index) {
-                    final contractor = contractors[index];
-                    return _buildContractorCard(context, contractor);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+7      ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
       ),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Contractors',
-                style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primary),
-              ),
-              Text('Verified professionals in your area', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
-            ],
-          ),
-        ],
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.contractors,
+                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                ),
+                Text(l10n.verifiedPros, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(32),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.storefront_rounded, size: 48, color: Color(0xFF94A3B8)),
+            child: Icon(Icons.storefront_rounded, size: 48, color: Theme.of(context).hintColor),
           ),
           const SizedBox(height: 24),
           Text(
-            'Coming Soon to Your Area',
-            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primary),
+            l10n.comingSoon,
+            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(height: 8),
           Text(
-            'We are currently onboarding top-tier contractors.',
-            style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+            l10n.onboardingContractors,
+            style: GoogleFonts.inter(color: Theme.of(context).hintColor),
           ),
         ],
       ),
@@ -106,11 +60,12 @@ class MarketplaceScreen extends StatelessWidget {
   }
 
   Widget _buildContractorCard(BuildContext context, Map<String, dynamic> c) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
         ],
@@ -123,10 +78,10 @@ class MarketplaceScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 child: Text(
                   c['name'][0].toUpperCase(),
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.accent),
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                 ),
               ),
               const SizedBox(width: 16),
@@ -134,8 +89,8 @@ class MarketplaceScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c['name'], style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16, color: AppTheme.primary)),
-                    Text(c['category'], style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accent, fontWeight: FontWeight.w600)),
+                    Text(c['name'], style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+                    Text(c['category'], style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -145,9 +100,9 @@ class MarketplaceScreen extends StatelessWidget {
           const Spacer(),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
+              Icon(Icons.location_on_outlined, size: 14, color: Theme.of(context).hintColor),
               const SizedBox(width: 4),
-              Text('${c['city']}, ${c['state']}', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
+              Text('${c['city']}, ${c['state']}', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
             ],
           ),
           const SizedBox(height: 16),
@@ -162,6 +117,7 @@ class MarketplaceScreen extends StatelessWidget {
                   // Wait, we can't easily access context here if it's not passed. 
                   // Let's refactor _buildContractorCard to take context.
                   builder: (ctx) => Dialog(
+                    backgroundColor: Theme.of(context).cardColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     child: Container(
                       padding: const EdgeInsets.all(32),
@@ -171,26 +127,49 @@ class MarketplaceScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [
-                            CircleAvatar(radius: 30, backgroundColor: AppTheme.accent.withValues(alpha: 0.1), child: Text(c['name'][0], style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.accent))),
+                            CircleAvatar(radius: 30, backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), child: Text(c['name'][0], style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary))),
                             const SizedBox(width: 20),
                             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(c['name'], style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primary)),
-                              Text(c['category'], style: GoogleFonts.inter(fontSize: 14, color: AppTheme.accent)),
+                              Text(c['name'], style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                              Text(c['category'], style: GoogleFonts.inter(fontSize: 14, color: Theme.of(context).colorScheme.primary)),
                             ])),
                             IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close))
                           ]),
                           const SizedBox(height: 24),
-                          Text('About', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8))),
+                          Text(l10n.about, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).hintColor)),
                           const SizedBox(height: 8),
-                          Text(c['bio'] ?? 'No bio available.', style: GoogleFonts.inter(color: const Color(0xFF64748B), height: 1.5)),
+                          Text(c['bio'] ?? l10n.noBio, style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), height: 1.5)),
                           const SizedBox(height: 24),
                           Row(children: [
-                            const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF64748B)),
+                            Icon(Icons.location_on_outlined, size: 18, color: Theme.of(context).hintColor),
                             const SizedBox(width: 8),
-                            Text('${c['city']}, ${c['state']}', style: GoogleFonts.inter(color: const Color(0xFF64748B))),
+                            Text('${c['city']}, ${c['state']}', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
                           ]),
                           const SizedBox(height: 32),
-                          SizedBox(width: double.infinity, height: 50, child: ElevatedButton(onPressed: () async {
+                           Row(
+                             children: [
+                               Expanded(
+                                 child: OutlinedButton(
+                                   onPressed: () {
+                                     Navigator.pop(ctx);
+                                     Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(
+                                       otherUserId: c['id'],
+                                       otherUserName: c['name'],
+                                     )));
+                                   },
+                                   style: OutlinedButton.styleFrom(
+                                     foregroundColor: Theme.of(context).colorScheme.primary,
+                                     side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                                     padding: const EdgeInsets.symmetric(vertical: 16),
+                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                   ),
+                                   child: Text(l10n.message),
+                                 ),
+                               ),
+                               const SizedBox(width: 12),
+                               Expanded(
+                                 child: ElevatedButton(
+                                   onPressed: () async {
                              final auth = AuthService();
                              final db = DatabaseService();
                              final user = auth.currentUser;
@@ -211,9 +190,20 @@ class MarketplaceScreen extends StatelessWidget {
                                'amount': 0.0, // Initial leads have no amount
                              });
                              
-                             Navigator.pop(ctx);
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Connection request sent!')));
-                          }, child: const Text('Contact Contractor')))
+                             if (ctx.mounted) Navigator.pop(ctx);
+                             if (context.mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Connection request sent!')));
+                             }
+                          }, 
+                                   style: ElevatedButton.styleFrom(
+                                     padding: const EdgeInsets.symmetric(vertical: 16),
+                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                   ),
+                                   child: Text(l10n.hire),
+                                 ),
+                               ),
+                             ],
+                           )
                         ],
                       ),
                     ),
@@ -222,9 +212,9 @@ class MarketplaceScreen extends StatelessWidget {
               },
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
               ),
-              child: Text('View Profile', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary)),
+              child: Text(l10n.viewProfile, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/screens/register_screen.dart';
 import 'package:rap_app/services/auth_service.dart';
@@ -23,7 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() async {
     if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in all fields')));
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.fillAllFields)));
       return;
     }
     setState(() => _isLoading = true);
@@ -59,8 +61,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: AppTheme.webBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           // Left Side: Visual/Branding (Only on wide screens)
@@ -95,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
                       const SizedBox(height: 16),
                       Text(
-                        'THE NEW STANDARD FOR AI ESTIMATES',
+                        l10n.newStandard,
                         style: GoogleFonts.inter(
                           color: Colors.white60,
                           fontSize: 16,
@@ -123,35 +126,35 @@ class _LoginScreenState extends State<LoginScreen> {
                       _buildMobileLogo(),
                       const SizedBox(height: 48),
                       Text(
-                        'Sign In',
+                        l10n.signIn,
                         style: GoogleFonts.outfit(
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
-                      ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+                      ),
                       const SizedBox(height: 8),
                       Text(
-                        'Enter your credentials to access your account.',
+                        l10n.signInSubtitle,
                         style: GoogleFonts.inter(
                           fontSize: 16,
-                          color: const Color(0xFF64748B),
+                          color: Theme.of(context).hintColor,
                         ),
-                      ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
+                      ),
                       const SizedBox(height: 48),
                       
                       // Email Field
-                      _inputLabel('Email Address'),
+                      _inputLabel(l10n.emailAddress),
                       TextField(
                         controller: _emailController,
                         style: GoogleFonts.inter(),
                         decoration: _inputDecoration('name@company.com', Icons.alternate_email_rounded),
-                      ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                      ),
                       
                       const SizedBox(height: 24),
                       
                       // Password Field
-                      _inputLabel('Password'),
+                      _inputLabel(l10n.password),
                       TextField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
@@ -161,12 +164,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             icon: Icon(
                               _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                               size: 20,
-                              color: const Color(0xFF94A3B8),
+                              color: Theme.of(context).hintColor,
                             ),
                             onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                           ),
                         ),
-                      ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
+                      ),
                       
                       const SizedBox(height: 12),
                       Align(
@@ -174,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: TextButton(
                           onPressed: () {},
                           child: Text(
-                            'Forgot password?',
+                            l10n.forgotPassword,
                             style: GoogleFonts.inter(
                               color: AppTheme.accent,
                               fontWeight: FontWeight.w600,
@@ -193,12 +196,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: _isLoading 
                             ? const SpinKitThreeBounce(color: Colors.white, size: 20)
-                            : Text('Sign In', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
+                            : Text(l10n.signIn, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
                         ),
                       ).animate().fadeIn(delay: 700.ms).scale(),
                       
@@ -211,20 +214,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: OutlinedButton(
                           onPressed: _isLoading ? null : _googleSignIn,
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE2E8F0)),
+                            side: BorderSide(color: Theme.of(context).dividerColor),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.g_mobiledata, size: 30, color: AppTheme.primary),
+                              Icon(Icons.g_mobiledata, size: 30, color: Theme.of(context).colorScheme.primary),
                               const SizedBox(width: 12),
                               Text(
-                                'Continue with Google',
+                                l10n.continueWithGoogle,
                                 style: GoogleFonts.inter(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
-                                  color: AppTheme.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ],
@@ -238,13 +241,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Don't have an account?",
-                            style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+                            l10n.dontHaveAccount,
+                            style: GoogleFonts.inter(color: Theme.of(context).hintColor),
                           ),
                           TextButton(
                             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterScreen())),
                             child: Text(
-                              'Create Account',
+                              l10n.createAccount,
                               style: GoogleFonts.inter(
                                 color: AppTheme.accent,
                                 fontWeight: FontWeight.bold,
@@ -253,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ).animate().fadeIn(delay: 900.ms),
-                    ],
+                    ].animate(interval: 50.ms).fadeIn().slideY(begin: 0.1, end: 0),
                   ),
                 ),
               ),
@@ -271,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primary,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
@@ -279,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(width: 12),
         Text(
           'RAP',
-          style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.primary),
+          style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary),
         ),
       ],
     );
@@ -290,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         label,
-        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.primary),
+        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: Theme.of(context).colorScheme.primary),
       ),
     );
   }
@@ -298,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
   InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
+      prefixIcon: Icon(icon, color: Theme.of(context).hintColor, size: 20),
     );
   }
 }

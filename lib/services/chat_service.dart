@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 
 class ChatService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -15,6 +14,9 @@ class ChatService {
     required String senderId,
     required String content,
     String type = 'text',
+    String? senderName,
+    String? receiverName,
+    String? receiverId,
   }) async {
     await _db.collection('chats').doc(chatId).collection('messages').add({
       'senderId': senderId,
@@ -24,11 +26,20 @@ class ChatService {
     });
 
     // Update last message in chat document for list view previews
-    await _db.collection('chats').doc(chatId).set({
+    final Map<String, dynamic> updateData = {
       'lastMessage': content,
       'lastTimestamp': FieldValue.serverTimestamp(),
       'participants': chatId.split('_'),
-    }, SetOptions(merge: true));
+    };
+
+    if (senderName != null && receiverName != null && receiverId != null) {
+      updateData['displayNames'] = {
+        senderId: senderName,
+        receiverId: receiverName,
+      };
+    }
+
+    await _db.collection('chats').doc(chatId).set(updateData, SetOptions(merge: true));
   }
 
   // Stream messages for a specific chat
@@ -37,14 +48,12 @@ class ChatService {
         .collection('chats')
         .doc(chatId)
         .collection('messages')
-        .orderBy('timestamp', descending: true)
         .snapshots();
   }
   // Stream users chats
   Stream<QuerySnapshot> getUserChats(String userId) {
     return _db.collection('chats')
       .where('participants', arrayContains: userId)
-      .orderBy('lastTimestamp', descending: true)
       .snapshots();
   }
 }

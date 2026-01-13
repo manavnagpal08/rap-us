@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:rap_app/theme/app_theme.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
@@ -10,13 +9,13 @@ class SupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Support', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+        title: Text('Support', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -26,9 +25,10 @@ class SupportScreen extends StatelessWidget {
           children: [
             _buildAiAssistantCard(context),
             const SizedBox(height: 24),
-            Text('RESOURCES', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1.5)),
+            Text('RESOURCES', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).hintColor, letterSpacing: 1.5)),
             const SizedBox(height: 16),
             _buildSupportOption(
+              context,
               icon: Icons.menu_book_rounded,
               title: 'Documentation',
               subtitle: 'Guides on using RAP',
@@ -36,6 +36,7 @@ class SupportScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildSupportOption(
+              context,
               icon: Icons.mail_outline_rounded,
               title: 'Contact Support',
               subtitle: 'Get help from our team',
@@ -63,13 +64,13 @@ class SupportScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
-          colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
+          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -102,8 +103,8 @@ class SupportScreen extends StatelessWidget {
             height: 50,
             child: ElevatedButton.icon(
               onPressed: () => _showChatDialog(context),
-              icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppTheme.primary),
-              label: Text('Open Help Chat', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+              icon: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).colorScheme.primary),
+              label: Text('Open Help Chat', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -115,14 +116,15 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSupportOption({
+  Widget _buildSupportOption(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       borderRadius: BorderRadius.circular(16),
       elevation: 0,
       child: InkWell(
@@ -132,29 +134,29 @@ class SupportScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
              borderRadius: BorderRadius.circular(16),
-             border: Border.all(color: Colors.transparent),
+             border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppTheme.primary, size: 24),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(subtitle, style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 13)),
+                    Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+                    Text(subtitle, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 13)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+              Icon(Icons.chevron_right_rounded, color: Theme.of(context).dividerColor),
             ],
           ),
         ),
@@ -221,7 +223,7 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
@@ -231,15 +233,15 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome, color: AppTheme.accent),
+                  Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 12),
-                  Text('Help Assistant', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Help Assistant', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
                   const Spacer(),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface)),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(20),
@@ -252,12 +254,12 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16).copyWith(topLeft: Radius.zero),
                         ),
-                        child: const SizedBox(
+                        child: SizedBox(
                           width: 40, 
-                          child: Center(child: Text('...', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold))),
+                          child: Center(child: Text('...', style: TextStyle(color: Theme.of(context).hintColor, fontWeight: FontWeight.bold))),
                         ),
                       ),
                     );
@@ -271,7 +273,7 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
                       padding: const EdgeInsets.all(16),
                       constraints: const BoxConstraints(maxWidth: 280),
                       decoration: BoxDecoration(
-                        color: isUser ? AppTheme.primary : const Color(0xFFF1F5F9),
+                        color: isUser ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(16).copyWith(
                           topRight: isUser ? Radius.zero : const Radius.circular(16),
                           topLeft: isUser ? const Radius.circular(16) : Radius.zero,
@@ -279,7 +281,7 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
                       ),
                       child: Text(
                         msg['content']!,
-                        style: GoogleFonts.inter(color: isUser ? Colors.white : const Color(0xFF1E293B), height: 1.4),
+                        style: GoogleFonts.inter(color: isUser ? Colors.white : Theme.of(context).colorScheme.onSurface, height: 1.4),
                       ),
                     ),
                   );
@@ -293,12 +295,14 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Ask a question...',
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: Theme.of(context).dividerColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: BorderSide.none),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        hintStyle: TextStyle(color: Theme.of(context).hintColor),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),
@@ -307,8 +311,8 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
                   FloatingActionButton(
                     mini: true,
                     onPressed: _sendMessage,
-                    backgroundColor: AppTheme.primary,
-                    child: const Icon(Icons.send_rounded, size: 18),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: const Icon(Icons.send_rounded, size: 18, color: Colors.white),
                   ),
                 ],
               ),

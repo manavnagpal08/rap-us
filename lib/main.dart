@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:rap_app/firebase_options.dart';
 import 'package:rap_app/screens/splash_screen.dart';
@@ -12,6 +14,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await AppTheme.init();
 
   if (kIsWeb) {
     // This often fixes "channel" errors on restricted networks or certain browsers
@@ -42,14 +45,27 @@ class RapApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: AppTheme.themeModeNotifier,
-      builder: (context, mode, child) {
-        return MaterialApp(
-          title: 'RAP - Repair & Assembly Platform',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: mode,
-          home: const SplashScreen(),
+      builder: (context, mode, _) {
+        return ValueListenableBuilder<Locale>(
+          valueListenable: AppTheme.localeNotifier,
+          builder: (context, locale, _) {
+            return MaterialApp(
+              title: 'RAP Precision',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: mode,
+              locale: locale,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const SplashScreen(),
+            );
+          },
         );
       },
     );

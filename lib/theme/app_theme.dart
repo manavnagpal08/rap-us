@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTheme {
   // Luxury SaaS Palette
@@ -13,39 +14,67 @@ class AppTheme {
   static const Color webBg = Color(0xFFF8FAFC);    // Slate 50
   
   static final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier(ThemeMode.light);
+  static final ValueNotifier<String> currencySymbolNotifier = ValueNotifier('\$');
+  static final ValueNotifier<Locale> localeNotifier = ValueNotifier(const Locale('en'));
+
+  static Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Theme
+    final isDark = prefs.getBool('isDarkMode') ?? false;
+    themeModeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+    
+    // Locale
+    final langCode = prefs.getString('languageCode') ?? 'en';
+    localeNotifier.value = Locale(langCode);
+    
+    // Currency
+    currencySymbolNotifier.value = prefs.getString('currency') ?? '\$';
+
+    // Listeners to save changes
+    themeModeNotifier.addListener(() {
+      prefs.setBool('isDarkMode', themeModeNotifier.value == ThemeMode.dark);
+    });
+    
+    localeNotifier.addListener(() {
+      prefs.setString('languageCode', localeNotifier.value.languageCode);
+    });
+    
+    currencySymbolNotifier.addListener(() {
+      prefs.setString('currency', currencySymbolNotifier.value);
+    });
+  }
+
 
   static ThemeData get lightTheme {
     return ThemeData(
-      // ... existing light theme properties ...
       useMaterial3: true,
+      brightness: Brightness.light,
       primaryColor: primary,
-      scaffoldBackgroundColor: webBg,
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       colorScheme: ColorScheme.fromSeed(
         seedColor: accent,
         primary: primary,
         secondary: accent,
         surface: Colors.white,
+        onSurface: primary,
         error: error,
       ),
+      dividerColor: const Color(0xFFE2E8F0),
+      hintColor: const Color(0xFF64748B),
       textTheme: GoogleFonts.interTextTheme(),
       appBarTheme: AppBarTheme(
-        backgroundColor: webBg,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: GoogleFonts.outfit(color: primary, fontSize: 20, fontWeight: FontWeight.bold),
         iconTheme: const IconThemeData(color: primary),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 28),
-          elevation: 0,
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
-        ),
+      cardTheme: CardThemeData(
+        elevation: 0, 
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), 
+        color: Colors.white
       ),
-      cardTheme: CardThemeData(elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), color: Colors.white),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFFF1F5F9),
@@ -62,16 +91,21 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      primaryColor: primary,
-      scaffoldBackgroundColor: const Color(0xFF0F172A),
+      primaryColor: accent,
+      scaffoldBackgroundColor: const Color(0xFF0F172A), // Deep Slate
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
         seedColor: accent,
         primary: accent,
         secondary: secondary,
-        surface: const Color(0xFF1E293B),
+        surface: const Color(0xFF1E293B), // Card color for dark
+        onSurface: Colors.white,
         error: error,
+        surfaceContainer: const Color(0xFF334155),
       ),
+      dividerColor: Colors.white.withValues(alpha: 0.1),
+      hintColor: const Color(0xFF94A3B8),
+      cardColor: const Color(0xFF1E293B),
       textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       appBarTheme: AppBarTheme(
         backgroundColor: const Color(0xFF0F172A),
@@ -80,25 +114,19 @@ class AppTheme {
         titleTextStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accent,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 28),
-          elevation: 0,
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
-        ),
+      cardTheme: CardThemeData(
+        elevation: 0, 
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), 
+        color: const Color(0xFF1E293B)
       ),
-      cardTheme: CardThemeData(elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), color: const Color(0xFF1E293B)),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF334155),
+        fillColor: const Color(0xFF1E293B),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: accent, width: 2)),
-        hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
+        hintStyle: GoogleFonts.inter(color: const Color(0xFF64748B)),
       ),
     );
   }

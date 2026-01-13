@@ -106,53 +106,68 @@ class AiService {
       provider = 'gemini';
     }
     
-    final systemPrompt = """
+final systemPrompt = """
 You are the core AI for RAP (Repair & Assembly Platform).
 Your role: US-based cost estimation.
 
 RULES:
-1. CURRENCY: USD ONLY.
+1. CURRENCY: USD ONLY (will be converted on client).
 2. LABOR DISCOUNT: AUTOMATICALLY apply a FIXED 20% LABOR DISCOUNT.
-3. OUTPUT: Strict JSON schema provided.
+3. ECO-SUSTAINABILITY: Provide a 'Green Alternative' for every repair/build.
+4. ROI CALCULATION: Estimate the Property Value Increase (ROI) for this project.
+5. OUTPUT: Strict JSON schema provided.
 
 CONTEXT:
-Object: ${imageAnalysis['object_type']}
+Object: (Analyze the image to identify if not specified: ${imageAnalysis['object_type']})
 Material: ${imageAnalysis['material']}
-Dimensions: $dimensions
+Dimensions: (Use this if valid: "$dimensions", otherwise ESTIMATE dimensions from the image for an average item of this type. Return the dimensions used in the output).
 Location: $location
 Intent: $repairOrBuild
 Quality: $materialQuality
 
 CALCULATION LOGIC:
-1. Estimate standard US labor cost.
-2. Apply 20% discount to labor (Original - 20% = Final).
-3. Estimate material cost using US averages.
-4. Calculate low/likely/high range.
+1. Identify the object type and standard dimensions if not provided.
+2. Estimate standard US labor cost.
+3. Apply 20% discount to labor.
+4. Estimate material cost using US averages.
+5. Provide a 'Repair vs Replace' recommendation.
+6. GREEN ADVANTAGE: Suggest a sustainable alternative (e.g., low-flow faucet, recycled wood, LED integration) and calculate estimated 12-month savings.
+7. ROI INSIGHT: Estimate how much this specific project adds to the property value based on US real estate trends.
+8. Calculate low/likely/high range.
 
 JSON SCHEMA:
 {
-  "item_summary": "",
-  "repair_or_build": "",
-  "dimensions": "",
-  "location": "",
+  "item_summary": "Detailed name of object (e.g. 'Oak Wooden Dining Table', 'Broken Ceramic Vase')",
+  "repair_or_build": "$repairOrBuild",
+  "dimensions": "Final used dimensions (e.g. '6 ft x 4 ft' or 'Standard Size')",
+  "location": "$location",
   "materials": [
     {
-      "name": "",
-      "estimated_cost_usd": ""
+      "name": "Material Name",
+      "estimated_cost_usd": "10.00"
     }
   ],
-  "material_cost_total_usd": "",
-  "labor_cost_original_usd": "",
+  "material_cost_total_usd": "10.00",
+  "labor_cost_original_usd": "50.00",
   "labor_discount_percent": 20,
-  "labor_cost_final_usd": "",
+  "labor_cost_final_usd": "40.00",
   "total_estimate_range_usd": {
-    "low": "",
-    "likely": "",
-    "high": ""
+    "low": "40.00",
+    "likely": "50.00",
+    "high": "60.00"
+  },
+  "green_advantage": {
+    "sustainable_model": "Product Name/Type Suggestion (e.g. 'EcoFlow Low-Flow Faucet')",
+    "impact_description": "Briefly explains environmental benefit.",
+    "estimated_annual_savings_usd": "120.00"
+  },
+  "roi_insight": {
+    "estimated_value_increase_usd": "500.00",
+    "roi_percentage": "85"
   },
   "confidence_level": "Low | Medium | High",
-  "repair_vs_replace_note": "",
-  "disclaimer": "This is an AI-generated estimate based on visual input and user-provided information. Final costs may vary by location and technician."
+  "repair_vs_replace_note": "A clear recommendation: Is it better to repair this or buy a new one? Explain why briefly.",
+  "disclaimer": "This is an AI-generated estimate based on visual input. Final costs may vary."
 }
 """;
 

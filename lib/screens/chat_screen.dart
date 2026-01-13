@@ -44,6 +44,9 @@ class _ChatScreenState extends State<ChatScreen> {
     _chatService.sendMessage(
       chatId: _chatId!,
       senderId: _currentUserId!,
+      senderName: _auth.currentUser?.displayName ?? 'User',
+      receiverName: widget.otherUserName,
+      receiverId: widget.otherUserId,
       content: _messageController.text.trim(),
     );
     _messageController.clear();
@@ -56,19 +59,19 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-              child: Text(widget.otherUserName.isNotEmpty ? widget.otherUserName[0] : '?', style: GoogleFonts.outfit(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              child: Text(widget.otherUserName.isNotEmpty ? widget.otherUserName[0] : '?', style: GoogleFonts.outfit(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.otherUserName, style: GoogleFonts.outfit(color: const Color(0xFF1E293B), fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(widget.otherUserName, style: GoogleFonts.outfit(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
                 Row(
                   children: [
                     Container(
@@ -76,17 +79,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: const BoxDecoration(color: AppTheme.success, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 6),
-                    Text('Online', style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 12)),
+                    Text('Online', style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 12)),
                   ],
                 ),
               ],
             ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1E293B)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -107,62 +110,65 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(color: const Color(0xFFF1F5F9), shape: BoxShape.circle),
-                          child: const Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Color(0xFF94A3B8)),
+                          decoration: BoxDecoration(color: Theme.of(context).dividerColor.withValues(alpha: 0.05), shape: BoxShape.circle),
+                          child: Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Theme.of(context).hintColor),
                         ),
                         const SizedBox(height: 16),
-                        Text('No messages yet', style: GoogleFonts.outfit(fontSize: 18, color: const Color(0xFF64748B), fontWeight: FontWeight.bold)),
-                        Text('Say hello to start the conversation!', style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8))),
+                        Text('No messages yet', style: GoogleFonts.outfit(fontSize: 18, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                        Text('Say hello to start the conversation!', style: GoogleFonts.inter(fontSize: 14, color: Theme.of(context).hintColor)),
                       ],
                     ),
                   ).animate().fadeIn();
                 }
 
                 final messages = snapshot.data!.docs;
+                // Client-side sort to fix index issue
+                messages.sort((a, b) {
+                  final tA = (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+                  final tB = (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+                  if (tA == null || tB == null) return 0;
+                  return tB.compareTo(tA);
+                });
 
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index].data() as Map<String, dynamic>;
                     final isMe = msg['senderId'] == _currentUserId;
-                    final Timestamp? ts = msg['timestamp'] as Timestamp?;
-                    final time = ts != null ? DateFormat('hh:mm a').format(ts.toDate()) : 'Sending...';
+                    final time = msg['timestamp'] != null ? DateFormat('hh:mm a').format((msg['timestamp'] as Timestamp).toDate()) : '...';
                     
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Column(
-                        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 4, top: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                            constraints: const BoxConstraints(maxWidth: 280),
-                            decoration: BoxDecoration(
-                              gradient: isMe ? LinearGradient(colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)]) : null,
-                              color: isMe ? null : Colors.white,
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(20),
-                                topRight: const Radius.circular(20),
-                                bottomLeft: isMe ? const Radius.circular(20) : Radius.zero,
-                                bottomRight: isMe ? Radius.zero : const Radius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                              decoration: BoxDecoration(
+                                color: isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(22).copyWith(
+                                  bottomLeft: isMe ? null : Radius.zero,
+                                  bottomRight: isMe ? Radius.zero : null,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                                ],
                               ),
-                              boxShadow: [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
-                              ],
+                              child: Text(
+                                msg['content'],
+                                style: GoogleFonts.inter(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, height: 1.4),
+                              ),
                             ),
-                            child: Text(
-                              msg['content'],
-                              style: GoogleFonts.inter(color: isMe ? Colors.white : const Color(0xFF1E293B), height: 1.5),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4, right: 4),
-                            child: Text(time, style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF94A3B8))),
-                          ),
-                        ],
-                      ).animate().fadeIn().slideY(begin: 0.2, end: 0, duration: 200.ms),
+                            const SizedBox(height: 4),
+                            Text(time, style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).hintColor)),
+                          ],
+                        ),
+                      ).animate().fadeIn().slideY(begin: 0.1, end: 0),
                     );
                   },
                 );
@@ -171,9 +177,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
             ),
             child: SafeArea(
               child: Row(
@@ -181,14 +187,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: TextField(
                         controller: _messageController,
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         decoration: InputDecoration(
                           hintText: 'Type a message...',
-                          hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
+                          hintStyle: GoogleFonts.inter(color: Theme.of(context).hintColor),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         ),

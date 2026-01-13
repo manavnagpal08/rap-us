@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/screens/home_screen.dart';
 import 'package:rap_app/screens/history_screen.dart';
 import 'package:rap_app/screens/marketplace_screen.dart';
@@ -51,16 +52,20 @@ class _MainScreenState extends State<MainScreen> {
 
     final List<Widget> accessibleScreens = isContractor 
       ? [
-          const ContractorDashboard(),
-          const MarketplaceScreen(),
+          const ContractorDashboard(), // 0
+          const MarketplaceScreen(), // 1
+          const ChatListScreen(), // 2
+          const SettingsScreen(), // 3
         ]
       : [
-          const HomeScreen(),
-          const HistoryScreen(),
-          const ChatListScreen(), // Added
-          const MarketplaceScreen(),
-          if (isAdmin) const AdminScreen(),
+          const HomeScreen(), // 0
+          const HistoryScreen(), // 1
+          const ChatListScreen(), // 2
+          const MarketplaceScreen(), // 3
+          if (isAdmin) const AdminScreen() else const SettingsScreen(), // 4
         ];
+
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Row(
@@ -68,8 +73,26 @@ class _MainScreenState extends State<MainScreen> {
           if (isWide) _buildSidebar(isAdmin, isContractor),
           Expanded(
             child: Container(
-              color: AppTheme.webBg,
-              child: accessibleScreens[_selectedIndex.clamp(0, accessibleScreens.length - 1)],
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.05, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_selectedIndex),
+                  child: accessibleScreens[_selectedIndex.clamp(0, accessibleScreens.length - 1)],
+                ),
+              ),
             ),
           ),
         ],
@@ -77,43 +100,35 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: !isWide
           ? NavigationBar(
               elevation: 0,
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).cardColor,
               selectedIndex: _selectedIndex.clamp(0, accessibleScreens.length - 1),
               onDestinationSelected: (int index) => setState(() => _selectedIndex = index),
               destinations: isContractor 
                 ? [
-                    const NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: 'Pro'),
-                    const NavigationDestination(icon: Icon(Icons.storefront_outlined), label: 'Market'),
+                    NavigationDestination(icon: const Icon(Icons.dashboard_outlined), label: l10n.proDashboard),
+                    NavigationDestination(icon: const Icon(Icons.storefront_outlined), label: l10n.marketplace),
+                    NavigationDestination(icon: const Icon(Icons.chat_bubble_outline_rounded), label: l10n.messages),
+                    NavigationDestination(icon: const Icon(Icons.settings_outlined), label: l10n.settings),
                   ]
                 : [
-                    const NavigationDestination(icon: Icon(Icons.add_a_photo_outlined), label: 'New'),
-                    const NavigationDestination(icon: Icon(Icons.history), label: 'History'),
-                    const NavigationDestination(icon: Icon(Icons.storefront_outlined), label: 'Market'),
-                    if (isAdmin) const NavigationDestination(icon: Icon(Icons.admin_panel_settings_outlined), label: 'Admin'),
+                    NavigationDestination(icon: const Icon(Icons.add_a_photo_outlined), label: l10n.newEstimate),
+                    NavigationDestination(icon: const Icon(Icons.history), label: l10n.history),
+                    NavigationDestination(icon: const Icon(Icons.chat_bubble_outline_rounded), label: l10n.messages),
+                    NavigationDestination(icon: const Icon(Icons.storefront_outlined), label: l10n.contractors),
+                    if (isAdmin) NavigationDestination(icon: const Icon(Icons.admin_panel_settings_outlined), label: l10n.adminPanel) else NavigationDestination(icon: const Icon(Icons.settings_outlined), label: l10n.settings),
                   ],
             )
           : null,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-            await _auth.signOut();
-            if (mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-            }
-        },
-        backgroundColor: Colors.redAccent,
-        mini: true, 
-        tooltip: 'Logout',
-        child: const Icon(Icons.logout, color: Colors.white, size: 20),
-      ),
     );
   }
 
   Widget _buildSidebar(bool isAdmin, bool isContractor) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 300,
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(right: BorderSide(color: const Color(0xFFE2E8F0))),
+        color: Theme.of(context).cardColor,
+        border: Border(right: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
       ),
       child: Column(
         children: [
@@ -125,15 +140,17 @@ class _MainScreenState extends State<MainScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: isContractor 
                 ? [
-                    _navItem(0, Icons.dashboard_outlined, 'Pro Dashboard'),
-                    _navItem(1, Icons.storefront_outlined, 'Public Directory'),
+                    _navItem(0, Icons.dashboard_outlined, l10n.proDashboard),
+                    _navItem(1, Icons.storefront_outlined, l10n.marketplace),
+                    _navItem(2, Icons.chat_bubble_outline_rounded, l10n.messages),
+                    _navItem(3, Icons.settings_outlined, l10n.settings),
                   ]
                 : [
-                    _navItem(0, Icons.add_a_photo_outlined, 'New Estimate'),
-                    _navItem(1, Icons.history_rounded, 'History'),
-                    _navItem(2, Icons.chat_bubble_outline_rounded, 'Messages'), // Added
-                    _navItem(3, Icons.storefront_outlined, 'Contractors'),
-                    if (isAdmin) _navItem(4, Icons.admin_panel_settings_outlined, 'Admin Panel'),
+                    _navItem(0, Icons.add_a_photo_outlined, l10n.newEstimate),
+                    _navItem(1, Icons.history_rounded, l10n.history),
+                    _navItem(2, Icons.chat_bubble_outline_rounded, l10n.messages),
+                    _navItem(3, Icons.storefront_outlined, l10n.contractors),
+                    if (isAdmin) _navItem(4, Icons.admin_panel_settings_outlined, l10n.adminPanel) else _navItem(4, Icons.settings_outlined, l10n.settings),
                   ],
             ),
           ),
@@ -163,7 +180,7 @@ class _MainScreenState extends State<MainScreen> {
             style: GoogleFonts.outfit(
               fontSize: 28,
               fontWeight: FontWeight.w900,
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 1.5,
             ),
           ),
@@ -183,14 +200,14 @@ class _MainScreenState extends State<MainScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.accent.withValues(alpha: 0.08) : Colors.transparent,
+            color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08) : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                color: isSelected ? AppTheme.accent : const Color(0xFF64748B),
+                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
                 size: 22,
               ),
               const SizedBox(width: 16),
@@ -199,7 +216,7 @@ class _MainScreenState extends State<MainScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppTheme.accent : const Color(0xFF64748B),
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).hintColor,
                 ),
               ),
             ],
@@ -214,9 +231,9 @@ class _MainScreenState extends State<MainScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
       ),
       child: InkWell(
         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
@@ -237,12 +254,12 @@ class _MainScreenState extends State<MainScreen> {
                 children: [
                   Text(
                     _auth.currentUser?.displayName ?? 'User',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.primary),
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     'Settings',
-                    style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),

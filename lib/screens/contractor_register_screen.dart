@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/services/database_service.dart';
-import 'package:rap_app/theme/app_theme.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class ContractorRegisterScreen extends StatefulWidget {
@@ -53,7 +52,7 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.webBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 60),
@@ -64,11 +63,11 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
               children: [
                 Text(
                   'Become a Pro',
-                  style: GoogleFonts.outfit(fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                  style: GoogleFonts.outfit(fontSize: 40, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                 ),
                 Text(
                   'Complete your business profile to start receiving leads.',
-                  style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).hintColor),
                 ),
                 const SizedBox(height: 48),
                 
@@ -121,7 +120,7 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     child: _isLoading 
@@ -141,9 +140,9 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20, offset: const Offset(0, 10)),
         ],
@@ -160,7 +159,7 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         label,
-        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.primary),
+        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: Theme.of(context).colorScheme.primary),
       ),
     );
   }
@@ -168,7 +167,7 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: Theme.of(context).dividerColor.withValues(alpha: 0.05),
       filled: true,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
     );

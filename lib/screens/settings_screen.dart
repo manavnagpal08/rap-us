@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:rap_app/screens/security_screen.dart';
@@ -23,11 +24,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = _auth.currentUser;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Settings', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text(l10n.settings, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -37,11 +39,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile Section
-            _buildSectionTitle('Profile'),
+            _buildSectionTitle(context, 'Profile'),
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -55,13 +57,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     child: Text(
                       user?.displayName?.substring(0, 1).toUpperCase() ?? 'U',
                       style: GoogleFonts.outfit(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -75,14 +77,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: GoogleFonts.outfit(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1E293B),
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           user?.email ?? 'No email linked',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            color: const Color(0xFF64748B),
+                            color: Theme.of(context).hintColor,
                           ),
                         ),
                       ],
@@ -92,6 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onPressed: () => _showEditProfileDialog(context, user),
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(color: Theme.of(context).dividerColor),
                     ),
                     child: const Text('Edit'),
                   ),
@@ -102,21 +105,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 32),
             
             // Preferences
-            _buildSectionTitle('Preferences'),
-            _buildSettingsGroup([
+            _buildSectionTitle(context, l10n.preferences),
+            _buildSettingsGroup(context, [
               _buildSettingTile(
+                context,
                 icon: Icons.notifications_none_rounded,
-                title: 'Notifications',
+                title: l10n.notifications,
                 subtitle: 'Enable push alerts for new estimates',
                 trailing: Switch.adaptive(
                   value: _notificationsEnabled,
                   onChanged: (v) => setState(() => _notificationsEnabled = v),
-                  activeColor: AppTheme.accent,
+                  activeColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
               _buildSettingTile(
+                context,
                 icon: Icons.dark_mode_outlined,
-                title: 'Dark Mode',
+                title: l10n.darkMode,
                 subtitle: 'Switch to a darker visual style',
                 trailing: Switch.adaptive(
                   value: AppTheme.themeModeNotifier.value == ThemeMode.dark,
@@ -125,20 +130,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       AppTheme.themeModeNotifier.value = v ? ThemeMode.dark : ThemeMode.light;
                     });
                   },
-                  activeColor: AppTheme.accent,
+                  activeColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
               _buildSettingTile(
+                context,
                 icon: Icons.payments_outlined,
-                title: 'Currency',
+                title: l10n.activeCurrency,
                 subtitle: 'Select your preferred currency',
                 trailing: DropdownButton<String>(
                   value: _currency,
+                  dropdownColor: Theme.of(context).cardColor,
                   underline: const SizedBox(),
-                  onChanged: (v) => setState(() => _currency = v!),
+                  onChanged: (v) {
+                    setState(() {
+                      _currency = v!;
+                      switch (v) {
+                        case 'EUR':
+                          AppTheme.currencySymbolNotifier.value = '€';
+                          break;
+                        case 'GBP':
+                          AppTheme.currencySymbolNotifier.value = '£';
+                          break;
+                        case 'INR':
+                          AppTheme.currencySymbolNotifier.value = '₹';
+                          break;
+                        default:
+                          AppTheme.currencySymbolNotifier.value = '\$';
+                      }
+                    });
+                  },
                   items: ['USD', 'EUR', 'GBP', 'INR']
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e, style: TextStyle(color: Theme.of(context).colorScheme.onSurface))))
                       .toList(),
+                ),
+              ),
+              _buildSettingTile(
+                context,
+                icon: Icons.language_rounded,
+                title: l10n.language,
+                subtitle: 'Change app language',
+                trailing: DropdownButton<String>(
+                  value: AppTheme.localeNotifier.value.languageCode,
+                  dropdownColor: Theme.of(context).cardColor,
+                  underline: const SizedBox(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      AppTheme.localeNotifier.value = Locale(v);
+                      setState(() {});
+                    }
+                  },
+                  items: [
+                    {'code': 'en', 'name': 'English'},
+                    {'code': 'es', 'name': 'Español'},
+                    {'code': 'fr', 'name': 'Français'},
+                    {'code': 'de', 'name': 'Deutsch'},
+                    {'code': 'it', 'name': 'Italiano'},
+                    {'code': 'pt', 'name': 'Português'},
+                    {'code': 'hi', 'name': 'हिन्दी'},
+                  ].map((e) => DropdownMenuItem(value: e['code'], child: Text(e['name']!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)))).toList(),
                 ),
               ),
             ]),
@@ -146,17 +196,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 32),
             
             // Account
-            _buildSectionTitle('Account'),
-            _buildSettingsGroup([
+            _buildSectionTitle(context, l10n.account),
+            _buildSettingsGroup(context, [
               _buildSettingTile(
+                context,
                 icon: Icons.security_rounded,
-                title: 'Security',
+                title: l10n.security,
                 subtitle: 'Password, Biometrics & 2FA',
                 onTap: () {
                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecurityScreen()));
                 },
               ),
               _buildSettingTile(
+                context,
                 icon: Icons.help_outline_rounded,
                 title: 'Support',
                 subtitle: 'Help center & documentation',
@@ -165,17 +217,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               _buildSettingTile(
+                context,
                 icon: Icons.info_outline_rounded,
-                title: 'About RAP',
+                title: l10n.aboutRap,
                 subtitle: 'Version 1.0.0 (Build 5)',
                 onTap: () {
                   showDialog(
                     context: context,
                     builder: (ctx) => AboutDialog(
-                      applicationName: 'RAP Precision',
+                      applicationName: l10n.appTitle,
                       applicationVersion: '1.0.0',
-                      applicationIcon: const Icon(Icons.auto_awesome_rounded, color: AppTheme.accent),
-                      children: const [Text('RAP is the new standard for AI-powered repairs and estimations.')],
+                      applicationIcon: Icon(Icons.auto_awesome_rounded, color: Theme.of(context).colorScheme.primary),
+                      children: [Text(l10n.aboutDescription)],
                     ),
                   );
                 },
@@ -191,15 +244,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   await _auth.signOut();
-                  if (mounted) {
+                  if (context.mounted) {
                     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFEF2F2),
-                  foregroundColor: const Color(0xFFEF4444),
+                  backgroundColor: AppTheme.error.withValues(alpha: 0.1),
+                  foregroundColor: AppTheme.error,
                   elevation: 0,
-                  side: const BorderSide(color: Color(0xFFFEE2E2)),
+                  side: BorderSide(color: AppTheme.error.withValues(alpha: 0.2)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 child: Row(
@@ -222,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 12),
       child: Text(
@@ -231,30 +284,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontSize: 12,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.5,
-          color: const Color(0xFF94A3B8),
+          color: Theme.of(context).hintColor.withValues(alpha: 0.6),
         ),
       ),
     );
   }
 
-  Widget _buildSettingsGroup(List<Widget> children) {
+  Widget _buildSettingsGroup(BuildContext context, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
       ),
       child: Column(children: children),
     );
   }
 
-  Widget _buildSettingTile({
+  Widget _buildSettingTile(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -267,27 +315,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: const Color(0xFF334155), size: 22),
+        child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
       ),
       title: Text(
         title,
         style: GoogleFonts.inter(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF1E293B),
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       subtitle: Text(
         subtitle,
         style: GoogleFonts.inter(
           fontSize: 13,
-          color: const Color(0xFF64748B),
+          color: Theme.of(context).hintColor,
         ),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1)),
+      trailing: trailing ?? Icon(Icons.chevron_right_rounded, color: Theme.of(context).dividerColor),
     );
   }
 
@@ -310,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               await user.updateDisplayName(nameController.text.trim());
               await _db.updateUserProfile(user.uid, {'fullName': nameController.text.trim()});
               if (mounted) setState(() {});
-              Navigator.pop(ctx);
+              if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Save'),
           ),

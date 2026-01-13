@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/screens/contractor_register_screen.dart';
 import 'package:rap_app/services/auth_service.dart';
@@ -24,7 +25,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _register() async {
     if (_nameController.text.trim().isEmpty || _emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in all fields')));
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.fillAllFields)));
       return;
     }
     setState(() => _isLoading = true);
@@ -53,8 +55,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: AppTheme.webBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           // Left Side: Visual/Branding (Only on wide screens)
@@ -72,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: Colors.white.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 80),
@@ -117,25 +120,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _buildMobileLogo(),
                       const SizedBox(height: 48),
                       Text(
-                        'Create Account',
+                        l10n.signUp,
                         style: GoogleFonts.outfit(
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
                       const SizedBox(height: 8),
                       Text(
-                        'Join thousands of users getting instant estimates.',
+                        l10n.signUpSubtitle,
                         style: GoogleFonts.inter(
                           fontSize: 16,
-                          color: const Color(0xFF64748B),
+                          color: Theme.of(context).hintColor,
                         ),
                       ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
                       const SizedBox(height: 40),
                       
                       // Name Field
-                      _inputLabel('Full Name'),
+                      _inputLabel(l10n.fullName),
                       TextField(
                         controller: _nameController,
                         style: GoogleFonts.inter(),
@@ -144,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 20),
 
                       // Email Field
-                      _inputLabel('Email Address'),
+                      _inputLabel(l10n.emailAddress),
                       TextField(
                         controller: _emailController,
                         style: GoogleFonts.inter(),
@@ -153,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 20),
                       
                       // Password Field
-                      _inputLabel('Password'),
+                      _inputLabel(l10n.password),
                       TextField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
@@ -163,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             icon: Icon(
                               _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                               size: 20,
-                              color: const Color(0xFF94A3B8),
+                              color: Theme.of(context).hintColor,
                             ),
                             onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                           ),
@@ -190,12 +193,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _register,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: _isLoading 
                             ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                            : Text('Create Account', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
+                            : Text(l10n.signUp, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
                         ),
                       ).animate().fadeIn(delay: 800.ms).scale(),
                       
@@ -205,13 +208,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Already have an account?",
-                            style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+                            l10n.alreadyHaveAccount,
+                            style: GoogleFonts.inter(color: Theme.of(context).hintColor),
                           ),
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
                             child: Text(
-                              'Sign In',
+                              l10n.signIn,
                               style: GoogleFonts.inter(
                                 color: AppTheme.accent,
                                 fontWeight: FontWeight.bold,
@@ -238,7 +241,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primary,
+            color: Theme.of(context).colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
@@ -246,7 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(width: 12),
         Text(
           'RAP',
-          style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.primary),
+          style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary),
         ),
       ],
     );
@@ -257,7 +260,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         label,
-        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppTheme.primary),
+        style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: Theme.of(context).colorScheme.primary),
       ),
     );
   }
@@ -265,7 +268,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
+      prefixIcon: Icon(icon, color: Theme.of(context).hintColor, size: 20),
     );
   }
 
@@ -276,20 +279,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primary : const Color(0xFFF1F5F9),
+            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? AppTheme.primary : Colors.transparent),
+            border: Border.all(color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? Colors.white : const Color(0xFF64748B), size: 18),
+              Icon(icon, color: isSelected ? Colors.white : Theme.of(context).hintColor, size: 18),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : const Color(0xFF64748B),
+                  color: isSelected ? Colors.white : Theme.of(context).hintColor,
                 ),
               ),
             ],

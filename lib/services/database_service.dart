@@ -88,12 +88,12 @@ class DatabaseService {
     // In a real app, these would be aggregated queries or counters
     // For now, we will return some mock data stored in the user profile or just calculate it
     final jobs = await _db.collection('jobs').where('contractorId', isEqualTo: uid).get();
-    final activeJobs = jobs.docs.where((doc) => doc['status'] == 'in_progress').length;
-    // completedJobs variable removed as it was unused
-    final totalEarnings = jobs.docs.fold(0.0, (currentSum, doc) => currentSum + (doc['amount'] ?? 0.0));
+    final pendingJobs = jobs.docs.where((doc) => doc.data()['status'] == 'pending').length;
+    final activeJobs = jobs.docs.where((doc) => doc.data()['status'] == 'in_progress').length;
+    final totalEarnings = jobs.docs.fold(0.0, (currentSum, doc) => currentSum + (doc.data()['amount'] ?? 0.0));
 
     return {
-      'leads': jobs.docs.length, // Treating all assigned jobs as leads for now
+      'leads': pendingJobs,
       'active': activeJobs,
       'earnings': totalEarnings,
     };
@@ -195,5 +195,23 @@ class DatabaseService {
   Future<String?> getSystemPrompt() async {
     final doc = await _db.collection('settings').doc('ai_config').get();
     return doc.data()?['system_prompt'];
+  }
+
+  // Insurance & License Verification
+  Future<void> requestVerification(String uid, Map<String, dynamic> docs) async {
+    await _db.collection('contractors').doc(uid).update({
+      'verificationDocs': docs,
+      'isVerified': true, // Auto-verify for demo, normally would be pending
+    });
+  }
+
+  // Digital Contracts
+  Future<void> saveDigitalContract(String jobId, Map<String, dynamic> contractData) async {
+    await _db.collection('jobs').doc(jobId).update({
+      'contract': {
+        ...contractData,
+        'signedAt': FieldValue.serverTimestamp(),
+      }
+    });
   }
 }
