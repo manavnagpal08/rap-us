@@ -89,8 +89,8 @@ class DatabaseService {
     // For now, we will return some mock data stored in the user profile or just calculate it
     final jobs = await _db.collection('jobs').where('contractorId', isEqualTo: uid).get();
     final activeJobs = jobs.docs.where((doc) => doc['status'] == 'in_progress').length;
-    final completedJobs = jobs.docs.where((doc) => doc['status'] == 'completed').length;
-    final totalEarnings = jobs.docs.fold(0.0, (sum, doc) => sum + (doc['amount'] ?? 0.0));
+    // completedJobs variable removed as it was unused
+    final totalEarnings = jobs.docs.fold(0.0, (currentSum, doc) => currentSum + (doc['amount'] ?? 0.0));
 
     return {
       'leads': jobs.docs.length, // Treating all assigned jobs as leads for now

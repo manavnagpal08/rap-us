@@ -234,7 +234,7 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
               padding: const EdgeInsets.all(40.0),
               child: Column(
                 children: [
-                  Icon(Icons.assignment_outlined, size: 64, color: Colors.grey.withOpacity(0.3)),
+                  Icon(Icons.assignment_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   Text('No active jobs yet', style: GoogleFonts.inter(color: Colors.grey, fontSize: 16)),
                 ],

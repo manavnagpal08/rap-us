@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:rap_app/services/database_service.dart';
+
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';

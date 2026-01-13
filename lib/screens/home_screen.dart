@@ -517,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget content;
     if (title == 'Required Materials') {
         final materials = data['materials'] as List;
-        final materials = data['materials'] as List;
+
         content = Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -525,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: DataTable(
-            headingRowColor: MaterialStateProperty.all(const Color(0xFFF1F5F9)),
+            headingRowColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
             columns: [
               DataColumn(label: Text('Item', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Est. Cost', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),

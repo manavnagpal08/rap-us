@@ -63,13 +63,13 @@ class SupportScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
-          colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.8)],
+          colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.3),
+            color: AppTheme.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -81,7 +81,7 @@ class SupportScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 32),
@@ -94,7 +94,7 @@ class SupportScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Ask me about estimates, image scanning, or costs. I\'m here to help instantly.',
-            style: GoogleFonts.inter(fontSize: 15, color: Colors.white.withOpacity(0.8), height: 1.5),
+            style: GoogleFonts.inter(fontSize: 15, color: Colors.white.withValues(alpha: 0.8), height: 1.5),
           ),
           const SizedBox(height: 24),
           SizedBox(

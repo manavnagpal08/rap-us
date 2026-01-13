@@ -17,7 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final AuthService _auth = AuthService();
   final DatabaseService _db = DatabaseService();
   bool _notificationsEnabled = true;
-  bool _darkMode = false;
+
   String _currency = 'USD';
 
   @override
@@ -45,7 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -55,7 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: AppTheme.primary.withOpacity(0.1),
+                    backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
                     child: Text(
                       user?.displayName?.substring(0, 1).toUpperCase() ?? 'U',
                       style: GoogleFonts.outfit(
@@ -122,7 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: AppTheme.themeModeNotifier.value == ThemeMode.dark,
                   onChanged: (v) {
                     setState(() {
-                      _darkMode = v;
                       AppTheme.themeModeNotifier.value = v ? ThemeMode.dark : ThemeMode.light;
                     });
                   },
@@ -245,7 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
