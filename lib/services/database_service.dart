@@ -128,6 +128,24 @@ class DatabaseService {
         });
   }
 
+  Stream<List<Map<String, dynamic>>> getCustomerJobs(String customerId) {
+    return _db.collection('jobs')
+        .where('customerId', isEqualTo: customerId)
+        .snapshots()
+        .map((snapshot) {
+           final docs = snapshot.docs.map((doc) => {
+            ...doc.data(),
+            'id': doc.id
+          }).toList();
+          
+          docs.sort((a, b) {
+             // Basic sort by descending creation time if available
+             return (b['createdAt'] as Timestamp?)?.compareTo(a['createdAt'] as Timestamp? ?? Timestamp.now()) ?? 0;
+          });
+          return docs;
+        });
+  }
+
   Future<void> updateContractorJobStatus(String jobId, String status) async {
     await _db.collection('jobs').doc(jobId).update({'status': status});
   }

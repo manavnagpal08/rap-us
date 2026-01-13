@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/services/pdf_service.dart';
+import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import 'package:rap_app/screens/job_tracking_screen.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -12,6 +14,7 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final DatabaseService db = DatabaseService();
     final PdfService pdf = PdfService();
+    final AuthService auth = AuthService();
 
     return Scaffold(
       backgroundColor: AppTheme.webBg,
@@ -19,27 +22,58 @@ class HistoryScreen extends StatelessWidget {
         children: [
           _buildHeader(),
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: db.getEstimateHistory(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return _buildEmptyState();
-                }
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Active Jobs Section
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: db.getCustomerJobs(auth.currentUser?.uid ?? ''),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+                      
+                      final activeJobs = snapshot.data!;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('ACTIVE JOBS', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1.5)),
+                          const SizedBox(height: 16),
+                          ...activeJobs.map((job) => _buildActiveJobCard(context, job)),
+                          const SizedBox(height: 48),
+                        ],
+                      );
+                    },
+                  ),
 
-                final history = snapshot.data!;
-                return ListView.builder(
-                  padding: const EdgeInsets.all(32),
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    final item = history[index];
-                    final date = item['createdAt'] != null ? (item['createdAt']).toDate() : DateTime.now();
-                    return _buildHistoryCard(context, item, date, pdf);
-                  },
-                );
-              },
+                  Text('ESTIMATE HISTORY', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1.5)),
+                  const SizedBox(height: 16),
+
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: db.getEstimateHistory(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      final history = snapshot.data!;
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: history.length,
+                        itemBuilder: (context, index) {
+                          final item = history[index];
+                          final date = item['createdAt'] != null ? (item['createdAt']).toDate() : DateTime.now();
+                          return _buildHistoryCard(context, item, date, pdf);
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -255,6 +289,59 @@ class HistoryScreen extends StatelessWidget {
         ),
         Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primary)),
       ],
+    );
+  }
+  Widget _buildActiveJobCard(BuildContext context, Map<String, dynamic> job) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)]),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('IN PROGRESS', style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+              Icon(Icons.timelapse_rounded, color: Colors.white.withValues(alpha: 0.6)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(job['title'] ?? 'Repair Job', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          Text('Contractor: ${job['contractorName'] ?? 'Assigned Contractor'}', style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8))),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => JobTrackingScreen(job: job)));
+              },
+              icon: const Icon(Icons.map_rounded, color: AppTheme.primary),
+              label: const Text('Track Live'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primary,
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

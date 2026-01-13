@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
+import 'package:rap_app/screens/chat_screen.dart';
 
 class ContractorDashboard extends StatefulWidget {
   const ContractorDashboard({super.key});
@@ -137,6 +138,26 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                       child: const Text('Mark as Completed'),
                    ),
                  ),
+                if (job['status'] == 'in_progress' || job['status'] == 'pending')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                           Navigator.pop(ctx);
+                           Navigator.of(context).push(MaterialPageRoute(
+                             builder: (_) => ChatScreen(
+                               otherUserId: job['customerId'],
+                               otherUserName: job['customerName'] ?? 'Customer',
+                             ),
+                           ));
+                        },
+                        icon: const Icon(Icons.chat_bubble_outline_rounded),
+                        label: const Text('Chat with Customer'),
+                      ),
+                    ),
+                  ),
             ],
           ),
         ),
