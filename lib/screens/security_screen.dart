@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rap_app/services/security_service.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/services/database_service.dart';
@@ -16,8 +18,10 @@ class SecurityScreen extends StatefulWidget {
 class _SecurityScreenState extends State<SecurityScreen> {
   final AuthService _auth = AuthService();
   final DatabaseService _db = DatabaseService();
+  final SecurityService _security = SecurityService();
   bool _biometricsEnabled = false;
   bool _twoFactorEnabled = false;
+  String? _pendingSecret;
 
   @override
   void initState() {
@@ -76,14 +80,18 @@ class _SecurityScreenState extends State<SecurityScreen> {
               subtitle: l10n.biometricsSubtitle,
               trailing: Switch.adaptive(
                 value: _biometricsEnabled,
-                onChanged: (val) => _showAiGuidance(
-                  title: val ? l10n.enableBiometrics : l10n.disableBiometrics,
-                  explanation: val 
-                      ? l10n.biometricsEnableExplanation
-                      : l10n.biometricsDisableExplanation,
-                  actionLabel: val ? l10n.enable : l10n.disable,
-                  onConfirm: () => setState(() => _biometricsEnabled = val),
-                ),
+                onChanged: (val) async {
+                  if (val) {
+                    final authenticated = await _security.authenticateBiometrics();
+                    if (authenticated) {
+                      setState(() => _biometricsEnabled = true);
+                      await _db.updateUserProfile(_auth.currentUser!.uid, {'biometricsEnabled': true});
+                    }
+                  } else {
+                    setState(() => _biometricsEnabled = false);
+                    await _db.updateUserProfile(_auth.currentUser!.uid, {'biometricsEnabled': false});
+                  }
+                },
                 activeColor: AppTheme.accent,
               ),
             ),
@@ -94,17 +102,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
               subtitle: l10n.twoFactorSubtitle,
               trailing: Switch.adaptive(
                 value: _twoFactorEnabled,
-                onChanged: (val) => _showAiGuidance(
-                  title: val ? l10n.enable2FA : l10n.disable2FA,
-                  explanation: val
-                      ? l10n.twoFactorEnableExplanation
-                      : l10n.twoFactorDisableExplanation,
-                  actionLabel: val ? l10n.setup2FA : l10n.turnOff,
-                  onConfirm: () async {
-                    setState(() => _twoFactorEnabled = val);
-                    await _db.updateUserProfile(_auth.currentUser!.uid, {'is2FAEnabled': val});
-                  },
-                ),
+                onChanged: (val) {
+                  if (val) {
+                    _show2FASetup();
+                  } else {
+                    _showAiGuidance(
+                      title: l10n.disable2FA,
+                      explanation: l10n.twoFactorDisableExplanation,
+                      actionLabel: l10n.turnOff,
+                      onConfirm: () async {
+                        setState(() => _twoFactorEnabled = false);
+                        await _db.updateUserProfile(_auth.currentUser!.uid, {'is2FAEnabled': false, 'totpSecret': null});
+                      },
+                    );
+                  }
+                },
                 activeColor: AppTheme.accent,
               ),
             ),
@@ -125,10 +137,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -140,7 +152,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
         leading: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24).animate(target: onTap != null ? 1 : 0).scale(duration: 200.ms),
@@ -175,7 +187,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: AppTheme.accent.withOpacity(0.1), shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: AppTheme.accent.withValues(alpha: 0.1), shape: BoxShape.circle),
                   child: const Icon(Icons.auto_awesome, color: AppTheme.accent, size: 20),
                 ),
                 const SizedBox(width: 12),
@@ -237,5 +249,67 @@ class _SecurityScreenState extends State<SecurityScreen> {
         }
       }
     }
+  }
+
+  Future<void> _show2FASetup() async {
+    final secret = _security.generateTotpSecret();
+    final user = _auth.currentUser;
+    final uri = _security.getTotpUri(secret, user?.email ?? 'user');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Setup 2-Step Verification', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            const Text('Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.) to enable 2FA.', textAlign: TextAlign.center),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              child: QrImageView(
+                data: uri,
+                version: QrVersions.auto,
+                size: 200.0,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Secret Key: $secret', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.accent)),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await _db.updateUserProfile(_auth.currentUser!.uid, {
+                    'is2FAEnabled': true,
+                    'totpSecret': secret,
+                  });
+                  setState(() => _twoFactorEnabled = true);
+                  if (mounted) Navigator.pop(context);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('2FA Enabled Successfully!'), backgroundColor: AppTheme.success),
+                    );
+                  }
+                },
+                child: const Text('I have scanned the code'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ],
+        ),
+      ),
+    );
   }
 }

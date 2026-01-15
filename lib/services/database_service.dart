@@ -1,9 +1,37 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  User? get currentUser => FirebaseAuth.instance.currentUser;
+
+  // File Upload to Firebase Storage
+  Future<String?> uploadFile(String path, File file) async {
+    try {
+      final ref = _storage.ref().child(path);
+      final uploadTask = await ref.putFile(file);
+      return await uploadTask.ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('Storage Error: $e');
+      return null;
+    }
+  }
+
+  // Generic Data Upload (for Signature Bytes)
+  Future<String?> uploadData(String path, Uint8List data) async {
+    try {
+      final ref = _storage.ref().child(path);
+      final uploadTask = await ref.putData(data);
+      return await uploadTask.ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('Storage Error: $e');
+      return null;
+    }
+  }
   // Estimates History
   Future<void> saveEstimate(Map<String, dynamic> estimateData) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -201,7 +229,9 @@ class DatabaseService {
   Future<void> requestVerification(String uid, Map<String, dynamic> docs) async {
     await _db.collection('contractors').doc(uid).update({
       'verificationDocs': docs,
-      'isVerified': true, // Auto-verify for demo, normally would be pending
+      'verificationStatus': 'pending', 
+      'isVerified': false, // Now requires admin review
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -212,6 +242,270 @@ class DatabaseService {
         ...contractData,
         'signedAt': FieldValue.serverTimestamp(),
       }
+    });
+  }
+
+  // Bidding System
+  Future<void> submitBid(String jobId, Map<String, dynamic> bidData) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await _db.collection('jobs').doc(jobId).collection('bids').add({
+      ...bidData,
+      'contractorId': user.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+      'status': 'pending',
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getBidsForJob(String jobId) {
+    return _db.collection('jobs').doc(jobId).collection('bids')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {
+          ...doc.data(),
+          'id': doc.id
+        }).toList());
+  }
+
+  Future<void> acceptBid(String jobId, String bidId, String contractorId, double amount) async {
+    // 1. Mark bid as accepted
+    await _db.collection('jobs').doc(jobId).collection('bids').doc(bidId).update({'status': 'accepted'});
+    
+    // 2. Reject other bids
+    final otherBids = await _db.collection('jobs').doc(jobId).collection('bids').where(FieldPath.documentId, isNotEqualTo: bidId).get();
+    for (var doc in otherBids.docs) {
+      await doc.reference.update({'status': 'rejected'});
+    }
+
+    // 3. Update job with contractor and amount
+    await _db.collection('jobs').doc(jobId).update({
+      'contractorId': contractorId,
+      'amount': amount,
+      'status': 'in_progress',
+      'acceptedBidId': bidId,
+    });
+  }
+
+  // Marketplace: Get Public Jobs (Jobs without a contractor)
+  Stream<List<Map<String, dynamic>>> getPublicJobs() {
+    return _db.collection('jobs')
+        .where('contractorId', isNull: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {
+          ...doc.data(),
+          'id': doc.id
+        }).toList());
+  }
+
+  // Referral & Loyalty Systems
+  Future<void> generateReferralCode(String uid) async {
+    final code = 'RAP${uid.substring(0, 5).toUpperCase()}';
+    await _db.collection('users').doc(uid).update({
+      'referralCode': code,
+    });
+  }
+
+  Future<bool> applyReferral(String referralCode) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    // Check if code exists
+    final query = await _db.collection('users').where('referralCode', isEqualTo: referralCode).get();
+    if (query.docs.isEmpty) return false;
+
+    final referrerId = query.docs.first.id;
+    if (referrerId == user.uid) return false; // Can't refer self
+
+    // Award points to both
+    await updateUserLoyalty(referrerId, 100); // 100 points for referrer
+    await updateUserLoyalty(user.uid, 50);    // 50 points for referred user
+
+    // Save referral record
+    await _db.collection('referrals').add({
+      'referrerId': referrerId,
+      'referredId': user.uid,
+      'code': referralCode,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    return true;
+  }
+
+  Future<void> updateUserLoyalty(String uid, int points) async {
+    final doc = _db.collection('users').doc(uid);
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(doc);
+      final currentPoints = (snapshot.data()?['loyaltyPoints'] ?? 0) as int;
+      transaction.update(doc, {'loyaltyPoints': currentPoints + points});
+    });
+  }
+
+  // Points Redemption System
+  Future<Map<String, dynamic>> redeemPoints(String uid, int points, String rewardType) async {
+    final doc = _db.collection('users').doc(uid);
+    return await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(doc);
+      final currentPoints = (snapshot.data()?['loyaltyPoints'] ?? 0) as int;
+
+      if (currentPoints < points) {
+        return {'success': false, 'message': 'Insufficient points'};
+      }
+
+      transaction.update(doc, {'loyaltyPoints': currentPoints - points});
+      
+      // Create redemption record
+      final redemptionRef = _db.collection('redemptions').doc();
+      transaction.set(redemptionRef, {
+        'userId': uid,
+        'points': points,
+        'rewardType': rewardType,
+        'status': 'completed',
+        'code': 'REWARD-${DateTime.now().millisecondsSinceEpoch}',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return {'success': true, 'message': 'Points redeemed successfully!'};
+    });
+  }
+
+  // Site Visit Booking
+  Future<void> bookSiteVisit(String contractorId, String jobId, DateTime dateTime) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await _db.collection('bookings').add({
+      'jobId': jobId,
+      'contractorId': contractorId,
+      'customerId': user.uid,
+      'customerName': user.displayName ?? 'Customer',
+      'dateTime': dateTime,
+      'status': 'confirmed',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Also update job with visit info
+    await _db.collection('jobs').doc(jobId).update({
+      'siteVisit': dateTime,
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getContractorBookings(String contractorId) {
+    return _db.collection('bookings')
+        .where('contractorId', isEqualTo: contractorId)
+        .orderBy('dateTime')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  // Project Progress Logs
+  Future<void> addProgressLog(String jobId, String note, {String? imageUrl}) async {
+    await _db.collection('jobs').doc(jobId).collection('logs').add({
+      'note': note,
+      'imageUrl': imageUrl,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getProjectLogs(String jobId) {
+    return _db.collection('jobs').doc(jobId).collection('logs')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  // Team/Group Chat Management
+  Future<String> createTeamChat(String jobId, List<String> memberUids) async {
+    final chatRef = await _db.collection('group_chats').add({
+      'jobId': jobId,
+      'members': memberUids,
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastMessage': 'Group chat started',
+      'lastTimestamp': FieldValue.serverTimestamp(),
+    });
+    return chatRef.id;
+  }
+
+  Future<void> sendGroupMessage(String groupChatId, String senderId, String text, String senderName) async {
+    await _db.collection('group_chats').doc(groupChatId).collection('messages').add({
+      'senderId': senderId,
+      'senderName': senderName,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    await _db.collection('group_chats').doc(groupChatId).update({
+      'lastMessage': text,
+      'lastTimestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getGroupMessages(String groupChatId) {
+    return _db.collection('group_chats').doc(groupChatId).collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+  }
+
+  // AI Accuracy & Change Orders
+  Future<void> completeJobWithAccuracy(String jobId, double finalCost) async {
+    final docRef = _db.collection('jobs').doc(jobId);
+    final doc = await docRef.get();
+    final initialEstimate = (doc.data()?['initialAiEstimate'] ?? doc.data()?['amount'] ?? 1.0) as double;
+    
+    final accuracy = (initialEstimate / finalCost * 100).clamp(0, 100).toInt();
+
+    await docRef.update({
+      'status': 'completed',
+      'actualFinalCost': finalCost,
+      'aiAccuracyBadge': '$accuracy%',
+      'completedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> requestChangeOrder(String jobId, Map<String, dynamic> data) async {
+    await _db.collection('jobs').doc(jobId).collection('changeOrders').add({
+      ...data,
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> approveChangeOrder(String jobId, String orderId, double newAmount) async {
+    await _db.collection('jobs').doc(jobId).collection('changeOrders').doc(orderId).update({
+      'status': 'approved',
+    });
+    
+    await _db.collection('jobs').doc(jobId).update({
+      'amount': newAmount,
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getChangeOrders(String jobId) {
+    return _db.collection('jobs').doc(jobId).collection('changeOrders')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  Future<Map<String, dynamic>?> getJobById(String jobId) async {
+    final doc = await _db.collection('jobs').doc(jobId).get();
+    return doc.exists ? {...doc.data()!, 'id': doc.id} : null;
+  }
+
+  // Admin Verification Methods
+  Stream<List<Map<String, dynamic>>> getPendingContractors() {
+    return _db.collection('contractors')
+        .where('verificationStatus', isEqualTo: 'pending')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  Future<void> verifyContractor(String uid, bool approve) async {
+    await _db.collection('contractors').doc(uid).update({
+      'isVerified': approve,
+      'verificationStatus': approve ? 'approved' : 'rejected',
+      'verifiedAt': FieldValue.serverTimestamp(),
     });
   }
 }

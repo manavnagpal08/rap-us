@@ -165,6 +165,7 @@ JSON SCHEMA:
     "estimated_value_increase_usd": "500.00",
     "roi_percentage": "85"
   },
+  "risk_level": "Low | Medium | High",
   "confidence_level": "Low | Medium | High",
   "repair_vs_replace_note": "A clear recommendation: Is it better to repair this or buy a new one? Explain why briefly.",
   "disclaimer": "This is an AI-generated estimate based on visual input. Final costs may vary."
@@ -198,5 +199,33 @@ JSON SCHEMA:
       String text = response.text ?? '{}';
       return jsonDecode(text.trim());
     }
+  }
+
+  Future<String> getHelpResponse(String userQuery) async {
+    final query = userQuery.toLowerCase();
+    
+    if (query.contains('estimate') || query.contains('cost')) {
+      return "To create an estimate, go to the Home screen and upload an image of the item. Our AI analyzes the material and damage to provide a cost estimate, automatically applying a 20% labor discount.";
+    }
+    if (query.contains('contractor') || query.contains('hire') || query.contains('marketplace')) {
+      return "You can hire verified pros in the Marketplace. Simply browse contractors by category and location, view their profile, and message them or request a direct cover project.";
+    }
+    if (query.contains('security') || query.contains('2fa') || query.contains('biometrics')) {
+      return "We take security seriously. You can enable Two-Factor Authentication (2FA) and Biometric Login (FaceID/Fingerprint) in the Settings > Security section.";
+    }
+    if (query.contains('green') || query.contains('sustainable')) {
+      return "Every estimate includes a 'Green Advantage' suggestion. This provides eco-friendly alternatives (like low-flow fixtures or recycled materials) and estimates your annual savings.";
+    }
+    if (query.contains('payment') || query.contains('billing')) {
+      return "Payments are handled securely through the platform. You can change your preferred currency in Settings > Preferences.";
+    }
+    if (query.contains('history')) {
+      return "You can view all your past estimates and active projects in the History tab. You can also export any estimate as a PDF for your records.";
+    }
+    if (query.contains('hello') || query.contains('hi')) {
+      return "Hello! I'm the RAP Help Assistant. I can help you with app usage, estimates, marketplace, or security questions. How can I assist you today?";
+    }
+    
+    return "I'm the RAP Help Assistant. I can help with information about estimates, contractors, security, and app features. For specific technical issues, please contact support@rap.com.";
   }
 }

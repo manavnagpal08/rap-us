@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:share_plus/share_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/services/ai_service.dart';
 import 'package:rap_app/services/database_service.dart';
@@ -448,7 +450,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         : Image.file(File(_image!.path), height: 200, width: double.infinity, fit: BoxFit.cover),
                   ),
                 ),
-              _buildConfidenceBadge(data['confidence_level']),
+              Row(
+                children: [
+                  _buildConfidenceBadge(data['confidence_level']),
+                  const SizedBox(width: 12),
+                  _buildRiskBadge(data['risk_level'] ?? 'Low'),
+                ],
+              ),
               const SizedBox(height: 24),
               Text(data['item_summary'], style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primary)),
               const SizedBox(height: 32),
@@ -475,19 +483,47 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Container(
-                    height: 60,
-                    width: 60,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.share_rounded, color: Color(0xFF64748B)),
-                      onPressed: () {},
+                  Expanded(
+                    child: SizedBox(
+                      height: 60,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user == null) return;
+                          
+                          await _db.createJob({
+                            'title': data['item_summary'],
+                            'customerName': user.displayName ?? 'Customer',
+                            'customerId': user.uid,
+                            'location': _userInput['location'],
+                            'amount': data['total_estimate_range_usd']['likely'],
+                            'status': 'pending',
+                            'contractorId': null, // Public job
+                          });
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Posted to Public Job Board!')));
+                          }
+                        },
+                        icon: const Icon(Icons.rocket_launch_outlined),
+                        label: const Text('Post to Board'),
+                      ),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: TextButton.icon(
+                  onPressed: () {
+                    final shareUrl = 'https://rap-us.web.app/estimate/${DateTime.now().millisecondsSinceEpoch}';
+                    Share.share('Check out my project estimate from RAP: $shareUrl');
+                  },
+                  icon: const Icon(Icons.share_rounded),
+                  label: const Text('Share Estimate'),
+                ),
               ),
             ],
           ),
@@ -679,6 +715,31 @@ class _HomeScreenState extends State<HomeScreen> {
           child: content,
         ),
       ],
+    );
+  }
+
+  Widget _buildRiskBadge(String level) {
+    Color color = AppTheme.success;
+    if (level.toLowerCase() == 'medium') color = AppTheme.warning;
+    if (level.toLowerCase() == 'high') color = AppTheme.error;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(50),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.warning_amber_rounded, size: 14, color: color),
+          const SizedBox(width: 8),
+          Text(
+            '${level.toUpperCase()} RISK',
+            style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 1),
+          ),
+        ],
+      ),
     );
   }
 

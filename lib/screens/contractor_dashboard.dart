@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/services/auth_service.dart';
@@ -94,15 +97,16 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                 Text(l10n.manageAccount, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
               ],
             ),
-            ElevatedButton.icon(
-              onPressed: _createTestJob,
-              icon: const Icon(Icons.bug_report_rounded, size: 18, color: Colors.white),
-              label: Text(l10n.addTestJob, style: const TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            if (kDebugMode)
+              ElevatedButton.icon(
+                onPressed: _createTestJob,
+                icon: const Icon(Icons.bug_report_rounded, size: 18, color: Colors.white),
+                label: Text(l10n.addTestJob, style: const TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -184,36 +188,69 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                   ],
                 ),
                 
-               if (job['status'] == 'in_progress')
-                 SizedBox(
-                   width: double.infinity,
-                   child: ElevatedButton(
-                      onPressed: () async {
-                         await _db.updateContractorJobStatus(job['id'], 'completed');
-                         if (ctx.mounted) Navigator.pop(ctx);
-                      },
-                      child: Text(l10n.markAsCompleted),
-                   ),
-                 ),
+                if (job['status'] == 'in_progress')
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _showChangeOrderDialog(job);
+                          },
+                          icon: const Icon(Icons.edit_note_rounded),
+                          label: const Text('Change Order'),
+                          style: OutlinedButton.styleFrom(foregroundColor: AppTheme.warning, side: const BorderSide(color: AppTheme.warning)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _showCompleteJobDialog(job);
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+                          child: Text(l10n.markAsCompleted),
+                        ),
+                      ),
+                    ],
+                  ),
                 if (job['status'] == 'in_progress' || job['status'] == 'pending')
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                           Navigator.pop(ctx);
-                           if (!mounted) return;
-                           Navigator.of(context).push(MaterialPageRoute(
-                             builder: (_) => ChatScreen(
-                               otherUserId: job['customerId'],
-                               otherUserName: job['customerName'] ?? 'Customer',
-                             ),
-                           ));
-                        },
-                        icon: const Icon(Icons.chat_bubble_outline_rounded),
-                        label: Text(l10n.chatWithCustomer),
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                               Navigator.pop(ctx);
+                               if (!mounted) return;
+                               Navigator.of(context).push(MaterialPageRoute(
+                                 builder: (_) => ChatScreen(
+                                   otherUserId: job['customerId'],
+                                   otherUserName: job['customerName'] ?? 'Customer',
+                                 ),
+                               ));
+                            },
+                            icon: const Icon(Icons.chat_bubble_outline_rounded),
+                            label: Text(l10n.chatWithCustomer),
+                          ),
+                        ),
+                        if (job['status'] == 'in_progress') ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _showAddLogDialog(job);
+                              },
+                              icon: const Icon(Icons.add_a_photo_outlined),
+                              label: const Text('Post Update'),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
             ],
@@ -231,6 +268,94 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
         children: [
           SizedBox(width: 100, child: Text(label, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontWeight: FontWeight.w600))),
           Expanded(child: Text(value, style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
+        ],
+      ),
+    );
+  }
+
+  void _showChangeOrderDialog(Map<String, dynamic> job) {
+    final amountController = TextEditingController(text: job['amount'].toString());
+    final reasonController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New Change Order'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amountController,
+              decoration: const InputDecoration(labelText: 'New Total Amount (\$)', prefixIcon: Icon(Icons.attach_money)),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              decoration: const InputDecoration(labelText: 'Reason for Change', hintText: 'Explain the scope change...'),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: AppTheme.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  const Icon(Icons.psychology_outlined, color: AppTheme.accent, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('AI will analyze this reason for the customer.', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.accent))),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              await _db.requestChangeOrder(job['id'], {
+                'requestedAmount': double.tryParse(amountController.text) ?? 0.0,
+                'reason': reasonController.text,
+              });
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Submit Request'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCompleteJobDialog(Map<String, dynamic> job) {
+    final costController = TextEditingController(text: job['amount'].toString());
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete Project'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter the final actual cost of the project to calculate AI accuracy.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: costController,
+              decoration: const InputDecoration(labelText: 'Final Actual Cost (\$)', prefixIcon: Icon(Icons.payments_outlined)),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final finalCost = double.tryParse(costController.text) ?? 0.0;
+              await _db.completeJobWithAccuracy(job['id'], finalCost);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+            child: const Text('Finalize Project'),
+          ),
         ],
       ),
     );
@@ -278,41 +403,119 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
     );
   }
 
-  void _showVerificationDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+  void _showAddLogDialog(Map<String, dynamic> job) {
+    final noteController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.docVerificationTitle),
+        title: const Text('Post Progress Update'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l10n.docVerificationSubtitle),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: const Icon(Icons.description_outlined),
-              title: Text(l10n.insurancePolicy),
-              subtitle: Text(l10n.pdfOrImage),
-              trailing: const Icon(Icons.upload_file),
-              onTap: () {},
+            Container(
+              height: 120,
+              width: double.infinity,
+              decoration: BoxDecoration(color: Theme.of(context).dividerColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)),
+              child: const Icon(Icons.add_a_photo_rounded, size: 40, color: AppTheme.primary),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: noteController,
+              decoration: const InputDecoration(hintText: 'Describe the work done...', border: OutlineInputBorder()),
+              maxLines: 3,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-              await _db.requestVerification(_auth.currentUser!.uid, {'status': 'submitted'});
-              if (!mounted) return;
+              if (noteController.text.trim().isEmpty) return;
+              await _db.addProgressLog(job['id'], noteController.text.trim());
               if (ctx.mounted) Navigator.pop(ctx);
-              setState(() {});
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.docsSubmitted)));
-              }
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Progress log posted!')));
             },
-            child: Text(l10n.submitForAiReview),
+            child: const Text('Post Update'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showVerificationDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    File? selectedFile;
+    bool isUploading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(l10n.docVerificationTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.docVerificationSubtitle),
+                const SizedBox(height: 24),
+                ListTile(
+                  leading: Icon(selectedFile != null ? Icons.check_circle_rounded : Icons.description_outlined, 
+                      color: selectedFile != null ? AppTheme.success : null),
+                  title: Text(l10n.insurancePolicy),
+                  subtitle: Text(selectedFile != null ? 'File selected: ${selectedFile!.path.split('/').last}' : l10n.pdfOrImage),
+                  trailing: const Icon(Icons.upload_file),
+                  onTap: () async {
+                    FilePickerResult? result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+                    );
+                    if (result != null) {
+                      setDialogState(() => selectedFile = File(result.files.single.path!));
+                    }
+                  },
+                ),
+                if (isUploading) ...[
+                  const SizedBox(height: 16),
+                  const LinearProgressIndicator(),
+                  const SizedBox(height: 8),
+                  Text('Uploading highly secured documents...', style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).hintColor)),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+              ElevatedButton(
+                onPressed: (selectedFile == null || isUploading) ? null : () async {
+                  setDialogState(() => isUploading = true);
+                  
+                  final uid = _auth.currentUser!.uid;
+                  final fileName = 'verification/$uid/insurance_${DateTime.now().millisecondsSinceEpoch}.${selectedFile!.path.split('.').last}';
+                  
+                  final downloadUrl = await _db.uploadFile(fileName, selectedFile!);
+                  
+                  if (downloadUrl != null) {
+                    await _db.requestVerification(uid, {
+                      'insuranceUrl': downloadUrl,
+                      'fileName': selectedFile!.path.split('/').last,
+                      'uploadedAt': DateTime.now().toIso8601String(),
+                    });
+                    
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.docsSubmitted)));
+                    }
+                  } else {
+                    setDialogState(() => isUploading = false);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload failed. Please try again.'), backgroundColor: AppTheme.error));
+                    }
+                  }
+                },
+                child: isUploading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(l10n.submitForAiReview),
+              ),
+            ],
+          );
+        }
       ),
     );
   }

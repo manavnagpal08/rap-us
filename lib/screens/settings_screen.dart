@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
@@ -195,6 +196,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
             
             const SizedBox(height: 32),
             
+            // Rewards & Referrals
+            _buildSectionTitle(context, 'Rewards & Referrals'),
+            FutureBuilder<Map<String, dynamic>?>(
+              future: _db.getUserProfile(user?.uid ?? ''),
+              builder: (context, snapshot) {
+                final userData = snapshot.data;
+                final referralCode = userData?['referralCode'] ?? 'NOT GENERATED';
+                final loyaltyPoints = userData?['loyaltyPoints'] ?? 0;
+
+                // Auto-generate code if missing
+                if (userData != null && userData['referralCode'] == null && user != null) {
+                  _db.generateReferralCode(user.uid);
+                }
+
+                return _buildSettingsGroup(context, [
+                  _buildSettingTile(
+                    context,
+                    icon: Icons.card_giftcard_rounded,
+                    title: 'Referral Code',
+                    subtitle: referralCode,
+                    trailing: TextButton(
+                      onPressed: () {
+                        Share.share('Join me on RAP for AI-powered home build/repairs! Use my code $referralCode for a 20% labor discount on your first project.');
+                      },
+                      child: const Text('Share'),
+                    ),
+                  ),
+                  _buildSettingTile(
+                    context,
+                    icon: Icons.stars_rounded,
+                    title: 'Loyalty Points',
+                    subtitle: '$loyaltyPoints points earned',
+                    trailing: TextButton(
+                      onPressed: () => _showRedemptionDialog(context, loyaltyPoints, user?.uid ?? ''),
+                      child: const Text('Redeem'),
+                    ),
+                  ),
+                  _buildSettingTile(
+                    context,
+                    icon: Icons.confirmation_number_outlined,
+                    title: 'Enter Invite Code',
+                    subtitle: 'Apply a friend\'s code for a bonus',
+                    onTap: () => _showReferralInputDialog(context),
+                  ),
+                ]);
+              }
+            ),
+
+            const SizedBox(height: 32),
+
             // Account
             _buildSectionTitle(context, l10n.account),
             _buildSettingsGroup(context, [
@@ -362,6 +413,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             child: const Text('Save'),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showReferralInputDialog(BuildContext context) {
+    final codeController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Apply Invite Code'),
+        content: TextField(
+          controller: codeController,
+          decoration: const InputDecoration(labelText: 'Enter Code', hintText: 'RAPXXXX'),
+          textCapitalization: TextCapitalization.characters,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await _db.applyReferral(codeController.text.trim().toUpperCase());
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? 'Referral applied! Points added.' : 'Invalid code or already used.'),
+                    backgroundColor: success ? AppTheme.success : AppTheme.error,
+                  ),
+                );
+                if (success) setState(() {});
+              }
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRedemptionDialog(BuildContext context, int currentPoints, String uid) {
+    final rewards = [
+      {'name': '\$5 Amazon Gift Card', 'points': 500, 'type': 'amazon'},
+      {'name': '10% Service Discount', 'points': 800, 'type': 'service_discount'},
+      {'name': '\$20 RAP Credit', 'points': 1500, 'type': 'credit'},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Redeem Rewards'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Available Balance: $currentPoints points', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: rewards.length,
+                  itemBuilder: (context, index) {
+                    final r = rewards[index];
+                    final canAfford = currentPoints >= (r['points'] as int);
+                    return ListTile(
+                      title: Text(r['name'] as String),
+                      subtitle: Text('${r['points']} points required'),
+                      trailing: ElevatedButton(
+                        onPressed: canAfford ? () async {
+                          final result = await _db.redeemPoints(uid, r['points'] as int, r['type'] as String);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['message']),
+                                backgroundColor: result['success'] ? AppTheme.success : AppTheme.error,
+                              ),
+                            );
+                            if (result['success']) setState(() {});
+                          }
+                        } : null,
+                        child: const Text('Redeem'),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
         ],
       ),
     );

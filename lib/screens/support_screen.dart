@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rap_app/services/ai_service.dart';
+import 'package:rap_app/screens/documentation_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SupportScreen extends StatelessWidget {
@@ -32,7 +35,9 @@ class SupportScreen extends StatelessWidget {
               icon: Icons.menu_book_rounded,
               title: 'Documentation',
               subtitle: 'Guides on using RAP',
-              onTap: () {}, // Placeholder for docs
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DocumentationScreen()));
+              },
             ),
             const SizedBox(height: 16),
             _buildSupportOption(
@@ -180,12 +185,12 @@ class _SimpleChatDialog extends StatefulWidget {
 }
 
 class __SimpleChatDialogState extends State<_SimpleChatDialog> {
+  final AiService _ai = AiService();
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> _messages = [
     {'role': 'assistant', 'content': 'Hello! I can help with using RAP. Ask me about creating estimates, scanning images, or checking costs.'}
   ];
   bool _isTyping = false;
-
   void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -196,27 +201,21 @@ class __SimpleChatDialogState extends State<_SimpleChatDialog> {
       _isTyping = true;
     });
 
-    // Simulated AI Response
-    await Future.delayed(const Duration(seconds: 1));
-    
-    String response = "I can help with that. Could you provide more details?";
-    final lower = text.toLowerCase();
-    
-    if (lower.contains('estimate') || lower.contains('create')) {
-        response = "To create an estimate, go to the 'New Estimate' tab, tap 'Upload Image', and follow the guided questions. I'll analyze the image and current market rates.";
-    } else if (lower.contains('scan') || lower.contains('image')) {
-        response = "Our AI scans your uploaded image to identify dimensions, materials, and damage. Ensure your photo is well-lit for the best accuracy.";
-    } else if (lower.contains('cost') || lower.contains('price')) {
-        response = "Costs are calculated based on your local area's labor rates and real-time material prices. We also apply a standard 20% labor discount automatically.";
-    } else if (lower.contains('labor') || lower.contains('discount')) {
-        response = "We apply a mandatory 20% discount on labor costs to ensure competitive pricing for every estimate generated.";
-    }
-
-    if (mounted) {
-      setState(() {
-        _isTyping = false;
-        _messages.add({'role': 'assistant', 'content': response});
-      });
+    try {
+      final response = await _ai.getHelpResponse(text);
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'assistant', 'content': response});
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'assistant', 'content': "Error: $e"});
+        });
+      }
     }
   }
 

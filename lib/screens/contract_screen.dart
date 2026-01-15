@@ -36,14 +36,20 @@ class _ContractScreenState extends State<ContractScreen> {
     setState(() => _isSaving = true);
     
     try {
-      await _userController.toPngBytes();
-      // In a real app, upload this bytes to Firebase Storage
-      // For now, we simulate success
-      
-      await _db.saveDigitalContract(widget.job['id'], {
-        'agreement_text': _generateAgreement(),
-        'status': 'signed',
-      });
+      final bytes = await _userController.toPngBytes();
+      if (bytes != null) {
+        final userId = _db.currentUser?.uid ?? 'unknown';
+        final signatureUrl = await _db.uploadData(
+          'contracts/${widget.job['id']}/signature_$userId.png',
+          bytes,
+        );
+        
+        await _db.saveDigitalContract(widget.job['id'], {
+          'agreement_text': _generateAgreement(),
+          'signatureUrl': signatureUrl,
+          'status': 'signed',
+        });
+      }
 
       if (mounted) {
         Navigator.pop(context);

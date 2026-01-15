@@ -14,7 +14,12 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
 
   // Admin Check
-  bool get isAdmin => currentUser?.email == 'manav.nagpal2005@gmail.com';
+  bool get isAdmin {
+    final email = currentUser?.email;
+    return email == 'manav.nagpal2005@gmail.com' || 
+           email == 'kaaysha.rao@gmail.com' || 
+           email == 'admin@rap.com';
+  }
 
   // Auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();

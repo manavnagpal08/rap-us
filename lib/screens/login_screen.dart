@@ -5,7 +5,10 @@ import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/screens/register_screen.dart';
 import 'package:rap_app/services/auth_service.dart';
+import 'package:rap_app/services/security_service.dart';
+import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,6 +22,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _auth = AuthService();
+  final DatabaseService _db = DatabaseService();
+  final SecurityService _security = SecurityService();
+  final _storage = const FlutterSecureStorage();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 
@@ -30,9 +36,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      await _auth.login(_emailController.text.trim(), _passwordController.text.trim());
-      if (mounted) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      final credential = await _auth.login(email, password);
+      if (credential != null && mounted) {
+        // Securely store for biometrics
+        await _storage.write(key: 'email', value: email);
+        await _storage.write(key: 'password', value: password);
+        
+        final profile = await _db.getUserProfile(credential.user!.uid);
+        if (profile != null && profile['is2FAEnabled'] == true) {
+          _showOtpDialog(profile['totpSecret']);
+        } else {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -40,6 +57,75 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showOtpDialog(String secret) {
+    final otpController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Two-Factor Authentication'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter the 6-digit code from your authenticator app.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8),
+              decoration: const InputDecoration(counterText: ''),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () async {
+            await _auth.signOut();
+            if (ctx.mounted) Navigator.pop(ctx);
+          }, child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              if (_security.verifyTotp(secret, otpController.text)) {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid OTP code'), backgroundColor: AppTheme.error));
+              }
+            },
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _biometricLogin() async {
+    final email = await _storage.read(key: 'email');
+    final password = await _storage.read(key: 'password');
+
+    if (email == null || password == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login with password once to enable biometrics.')));
+      }
+      return;
+    }
+
+    final authenticated = await _security.authenticateBiometrics();
+    if (authenticated) {
+      if (mounted) setState(() => _isLoading = true);
+      try {
+        await _auth.login(email, password);
+        if (mounted) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
+        }
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Biometric Login Failed: $e'), backgroundColor: AppTheme.error));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -234,6 +320,23 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ).animate().fadeIn(delay: 800.ms).scale(),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Biometric Login Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoading ? null : _biometricLogin,
+                          icon: const Icon(Icons.fingerprint_rounded),
+                          label: const Text('Login with Biometrics'),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Theme.of(context).dividerColor),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 850.ms).scale(),
                       
                       const SizedBox(height: 48),
                       

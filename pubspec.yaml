@@ -55,6 +55,14 @@ dependencies:
   local_auth: ^2.3.0
   signature: ^5.5.0
   shared_preferences: ^2.3.5
+  firebase_storage: ^13.0.5
+  file_picker: ^10.3.8
+  base32: ^2.2.0
+  qr_flutter: ^4.1.0
+  flutter_markdown: ^0.7.7+1
+  crypto: ^3.0.7
+  otp: ^3.2.0
+  flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
   flutter_test:
