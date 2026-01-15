@@ -12,6 +12,7 @@ import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/services/pdf_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:rap_app/screens/login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
