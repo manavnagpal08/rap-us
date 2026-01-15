@@ -22,18 +22,37 @@ class AiService {
     }
   }
 
-  // Step 1: Image Scan (Silently analyze)
+  // Step 1: Image Scan (Smart Analysis)
   Future<Map<String, dynamic>> analyzeImage(String imageBase64) async {
     final settings = await _getSettings();
     String provider = settings['active_provider'] ?? _defaultProvider;
     final String openAiKey = (settings['openai_key'] ?? '').toString();
     
-    // Auto-fallback if OpenAI is selected but no key is provided
     if (provider == 'openai' && openAiKey.isEmpty) {
       provider = 'gemini';
     }
 
-    final prompt = "You are the RAP silent analyzer. Analyze this image and identify: object type, material, damage/build intent, and complexity. Return ONLY JSON.";
+    const prompt = """
+    Analyze this image for a US-based repair or build estimation app.
+    Return ONLY VALID JSON.
+    
+    Output Format:
+    {
+      "object_type": "Specific name of the object (e.g. 'Wooden Dining Chair', 'Kitchen Cabinet')",
+      "estimated_dimensions": "Estimated H x W x D in feet/inches (e.g. '3ft x 2ft' or 'Standard Size')",
+      "material": "Dominant material detected (e.g. 'Oak Wood', 'Metal', 'Upholstery')",
+      "confidence_score": 0.0 to 1.0,
+      "questions": [
+        "A list of MAX 3 specific, relevant questions to ask the user to refine the estimate.",
+        "Example: 'Is the chair leg completely broken or just loose?'"
+      ]
+    }
+    
+    Rules:
+    - If confidence is high (>0.85), ask fewer questions (1 or 0).
+    - If confident about dimensions, include them clearly.
+    - Questions must be conditional and specific to the detected object.
+    """;
 
     if (provider == 'openai') {
       OpenAI.apiKey = openAiKey;
@@ -58,7 +77,7 @@ class AiService {
       if (key.isEmpty) key = _defaultGeminiKey;
 
       final model = GenerativeModel(
-        model: 'gemini-flash-latest', // Alias to latest available Flash for this key
+        model: 'gemini-1.5-flash',
         apiKey: key,
       );
       
@@ -67,7 +86,7 @@ class AiService {
       final content = [
         Content.multi([
           TextPart(prompt),
-          DataPart('image/jpeg', bytes), // Safer default for camera/gallery
+          DataPart('image/jpeg', bytes),
         ])
       ];
       
@@ -75,7 +94,6 @@ class AiService {
         final response = await model.generateContent(content);
         String text = response.text ?? '{}';
         
-        // Advanced cleanup for Gemini's potentially verbose JSON output
         if (text.contains('```json')) {
           text = text.split('```json').last.split('```').first;
         } else if (text.contains('```')) {

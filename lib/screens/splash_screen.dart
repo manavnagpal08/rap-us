@@ -30,11 +30,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
 
-    if (_auth.currentUser != null) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
-    } else {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
-    }
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MainScreen()));
   }
 
   @override

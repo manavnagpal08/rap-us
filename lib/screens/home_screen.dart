@@ -33,35 +33,63 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _finalEstimate;
 
   final TextEditingController _inputController = TextEditingController();
-  final List<String> _steps = ['Dimensions', 'Location', 'Intent', 'Quality'];
-  int _currentStepIndex = -1; // -1: Upload, 0-3: Questions, 4: Result
-
+  List<String> _dynamicQuestions = [];
+  List<String> _dynamicAnswers = [];
+  
+  // Stores answers mapped to keys for the AI prompt
   final Map<String, String> _userInput = {
     'dimensions': '',
     'location': '',
-    'repairOrBuild': '',
+    'repairOrBuild': '', // Intent
     'materialQuality': '',
   };
+
+  int _currentStepIndex = -1; // -1: Upload, 0-N: Questions, 99: Result
 
   Future<void> _pickImage(ImageSource source) async {
     final XFile? selected = await _picker.pickImage(source: source, imageQuality: 50, maxWidth: 800);
     if (selected != null) {
-      setState(() {
-        _image = selected;
-        _isLoading = true;
-        _currentStepIndex = -1;
-      });
+      if (mounted) {
+        setState(() {
+          _image = selected;
+          _isLoading = true;
+          _currentStepIndex = -1;
+          _dynamicQuestions = [];
+          _dynamicAnswers = [];
+        });
+      }
 
       final bytes = await selected.readAsBytes();
       _imageBase64 = base64Encode(bytes);
 
       try {
         final analysis = await _ai.analyzeImage(_imageBase64!);
+        
+        List<dynamic> questions = analysis['questions'] ?? [];
+        String dimensions = analysis['estimated_dimensions'] ?? '';
+        
+        // If dimensions detected, use them. If not, add question.
+        if (dimensions.isNotEmpty && dimensions.toLowerCase() != 'unknown') {
+            _userInput['dimensions'] = dimensions;
+        } else {
+            questions.insert(0, "What are the approximate dimensions?");
+        }
+        
+        // Ensure we have basics if not auto-detected
+        if (analysis['object_type'] == null) questions.add("What is this object?");
+
         if (mounted) {
           setState(() {
             _imageAnalysis = analysis;
+            _dynamicQuestions = List<String>.from(questions);
+            
+            // Standard questions if AI returns none (failsafe)
+            if (_dynamicQuestions.isEmpty) {
+              _dynamicQuestions = ['What do you want to do (Repair/Build)?', 'Where is this located?', 'Preferred material quality?'];
+            }
+            
             _isLoading = false;
-            _currentStepIndex = 0; // Start questions
+            _currentStepIndex = 0; 
           });
         }
       } catch (e) {
@@ -76,13 +104,29 @@ class _HomeScreenState extends State<HomeScreen> {
   void _submitAnswer() async {
     if (_inputController.text.isEmpty) return;
 
-    final stepKey = _steps[_currentStepIndex].toLowerCase().replaceAll(' ', '');
-    _userInput[stepKey == 'intent' ? 'repairOrBuild' : stepKey == 'quality' ? 'materialQuality' : stepKey] = _inputController.text;
+    // Save answer
+    _dynamicAnswers.add(_inputController.text);
+    
+    // Manual mapping for core fields if they were asked
+    // This is a simplified heuristic since questions are dynamic now
+    String currentQ = _dynamicQuestions[_currentStepIndex].toLowerCase();
+    String ans = _inputController.text;
+    
+    if (currentQ.contains('dimension')) _userInput['dimensions'] = ans;
+    else if (currentQ.contains('where') || currentQ.contains('location')) _userInput['location'] = ans;
+    else if (currentQ.contains('repair') || currentQ.contains('build')) _userInput['repairOrBuild'] = ans;
+    else if (currentQ.contains('quality') || currentQ.contains('material')) _userInput['materialQuality'] = ans;
+
     _inputController.clear();
 
-    if (_currentStepIndex < _steps.length - 1) {
+    if (_currentStepIndex < _dynamicQuestions.length - 1) {
       setState(() => _currentStepIndex++);
     } else {
+      // Finalize defaults if missed
+      if (_userInput['location']!.isEmpty) _userInput['location'] = 'US';
+      if (_userInput['repairOrBuild']!.isEmpty) _userInput['repairOrBuild'] = 'Repair';
+      if (_userInput['materialQuality']!.isEmpty) _userInput['materialQuality'] = 'Standard';
+      
       _calculateFinalEstimate();
     }
   }
@@ -90,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _calculateFinalEstimate() async {
     setState(() {
       _isLoading = true;
-      _currentStepIndex = 4; // Result state
+      _currentStepIndex = 99; // Result state
     });
 
     try {
@@ -106,10 +150,14 @@ class _HomeScreenState extends State<HomeScreen> {
         estimate['imageBase64'] = _imageBase64;
       }
       
-      try {
-        await _db.saveEstimate(estimate);
-      } catch (dbError) {
-        debugPrint('Firestore save failed: $dbError');
+      // Save only if user is logged in, otherwise just show
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        try {
+          await _db.saveEstimate(estimate);
+        } catch (dbError) {
+           debugPrint('Firestore save failed: $dbError');
+        }
       }
 
       if (mounted) {
@@ -123,6 +171,34 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Estimation failed: $e')));
       }
+    }
+  }
+  
+  void _requireAuth(VoidCallback onSuccess) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      onSuccess();
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Sign in Required'),
+          content: const Text('You need to sign in to export or save your estimate.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+              },
+              child: const Text('Sign In'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -154,6 +230,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTopBar(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    String title = l10n.dashboard;
+    if (_currentStepIndex >= 0 && _currentStepIndex < 99) title = l10n.analysis;
+    if (_currentStepIndex == 99) title = l10n.estimateDetails;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
@@ -169,11 +249,11 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _currentStepIndex == -1 ? l10n.dashboard : _currentStepIndex < 4 ? l10n.analysis : l10n.estimateDetails,
+                  title,
                   style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                 ),
-                if (_currentStepIndex >= 0 && _currentStepIndex < 4)
-                  Text('Part of the guided estimation process', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                if (_currentStepIndex >= 0 && _currentStepIndex < 99)
+                  Text('Getting details...', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
               ],
             ),
             if (_currentStepIndex != -1)
@@ -195,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCurrentState() {
     if (_currentStepIndex == -1) return _buildUploadSection();
-    if (_currentStepIndex >= 0 && _currentStepIndex < 4) return _buildQuestionSection();
+    if (_currentStepIndex >= 0 && _currentStepIndex < 99) return _buildQuestionSection();
     return _buildResultSection();
   }
 
@@ -332,10 +412,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       : Image.file(File(_image!.path), height: 200, width: double.infinity, fit: BoxFit.cover),
                 ),
               const SizedBox(height: 40),
-              _buildStepIndicator(),
+              // Progress Bar
+              Row(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: List.generate(_dynamicQuestions.length, (index) {
+                   return Container(
+                     width: 40,
+                     height: 4,
+                     margin: const EdgeInsets.symmetric(horizontal: 4),
+                     decoration: BoxDecoration(
+                       color: index <= _currentStepIndex ? AppTheme.accent : const Color(0xFFE2E8F0),
+                       borderRadius: BorderRadius.circular(2),
+                     ),
+                   );
+                 }),
+              ),
               const SizedBox(height: 32),
               Text(
-                _getQuestionText(),
+                _dynamicQuestions[_currentStepIndex],
                 style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primary),
                 textAlign: TextAlign.center,
               ),
@@ -345,9 +439,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 autofocus: true,
                 style: GoogleFonts.inter(fontSize: 18),
                 onSubmitted: (_) => _submitAnswer(),
-                decoration: InputDecoration(
-                  hintText: 'e.g. ${_getHintText()}',
-                  contentPadding: const EdgeInsets.all(24),
+                decoration: const InputDecoration(
+                  hintText: 'Type your answer...',
+                  contentPadding: EdgeInsets.all(24),
                 ),
               ),
               const SizedBox(height: 32),
@@ -365,45 +459,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     );
-  }
-
-  Widget _buildStepIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_steps.length, (index) {
-        bool isDone = index < _currentStepIndex;
-        bool isCurrent = index == _currentStepIndex;
-        return Container(
-          width: 40,
-          height: 4,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            color: isDone || isCurrent ? AppTheme.accent : const Color(0xFFE2E8F0),
-            borderRadius: BorderRadius.circular(2),
-          ),
-        );
-      }),
-    );
-  }
-
-  String _getQuestionText() {
-    switch (_currentStepIndex) {
-      case 0: return 'What are the dimensions?';
-      case 1: return 'Where is the object located?';
-      case 2: return 'Is this a repair or a build?';
-      case 3: return 'Which material quality?';
-      default: return '';
-    }
-  }
-
-  String _getHintText() {
-    switch (_currentStepIndex) {
-      case 0: return '10ft x 12ft';
-      case 1: return 'Los Angeles, CA';
-      case 2: return 'New custom bookshelf';
-      case 3: return 'Premium oak wood';
-      default: return 'Type here...';
-    }
   }
 
   Widget _buildResultSection() {
@@ -476,7 +531,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: SizedBox(
                       height: 60,
                       child: ElevatedButton.icon(
-                        onPressed: () => _pdf.generateAndPrintEstimate(data, _imageBase64, AppTheme.currencySymbolNotifier.value),
+                        onPressed: () => _requireAuth(() => _pdf.generateAndPrintEstimate(data, _imageBase64, AppTheme.currencySymbolNotifier.value)),
                         icon: const Icon(Icons.download_rounded, color: Colors.white),
                         label: const Text('Export Report (PDF)'),
                       ),
@@ -487,10 +542,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: SizedBox(
                       height: 60,
                       child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user == null) return;
-                          
+                        onPressed: () => _requireAuth(() async {
+                          final user = FirebaseAuth.instance.currentUser!;
                           await _db.createJob({
                             'title': data['item_summary'],
                             'customerName': user.displayName ?? 'Customer',
@@ -504,7 +557,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Posted to Public Job Board!')));
                           }
-                        },
+                        }),
                         icon: const Icon(Icons.rocket_launch_outlined),
                         label: const Text('Post to Board'),
                       ),
