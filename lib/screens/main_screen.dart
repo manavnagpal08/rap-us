@@ -10,6 +10,8 @@ import 'package:rap_app/screens/contractor_dashboard.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:rap_app/screens/chat_list_screen.dart';
+import 'package:rap_app/screens/login_screen.dart';
+import 'package:rap_app/screens/documentation_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
