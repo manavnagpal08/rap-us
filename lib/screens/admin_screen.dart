@@ -60,22 +60,30 @@ class _AdminScreenState extends State<AdminScreen> {
       length: 2,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: Text('Admin Control Center', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-          backgroundColor: Theme.of(context).cardColor,
-          elevation: 0,
-          bottom: TabBar(
-            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(text: 'Contractor Verification'),
-              Tab(text: 'System Settings'),
-            ],
-          ),
-        ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _buildVerificationTab(),
-            _buildSettingsTab(),
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 0),
+              color: Theme.of(context).cardColor,
+              child: TabBar(
+                labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).hintColor,
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                tabs: const [
+                  Tab(text: 'Contractor Verification'),
+                  Tab(text: 'System Settings'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildVerificationTab(),
+                  _buildSettingsTab(),
+                ],
+              ),
+            ),
           ],
         ),
       ),

@@ -22,15 +22,16 @@ class HistoryScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 32 : 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          MediaQuery.of(context).size.width > 600 ? 32 : 16,
+          40, // Top padding
+          MediaQuery.of(context).size.width > 600 ? 32 : 16,
+          32,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                   // Active Jobs Section
                   StreamBuilder<List<Map<String, dynamic>>>(
                     stream: db.getCustomerJobs(auth.currentUser?.uid ?? ''),
@@ -85,33 +86,6 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.history,
-                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                ),
-                Text(l10n.historySubtitle, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
 
 

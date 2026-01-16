@@ -209,7 +209,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          _buildTopBar(context),
           Expanded(
             child: Center(
               child: SingleChildScrollView(
@@ -229,50 +228,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    String title = l10n.dashboard;
-    if (_currentStepIndex >= 0 && _currentStepIndex < 99) title = l10n.analysis;
-    if (_currentStepIndex == 99) title = l10n.estimateDetails;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                ),
-                if (_currentStepIndex >= 0 && _currentStepIndex < 99)
-                  Text('Getting details...', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
-              ],
-            ),
-            if (_currentStepIndex != -1)
-              TextButton.icon(
-                onPressed: () => setState(() {
-                  _currentStepIndex = -1;
-                  _image = null;
-                  _finalEstimate = null;
-                }),
-                icon: const Icon(Icons.close, size: 18),
-                label: const Text('Cancel'),
-                style: TextButton.styleFrom(foregroundColor: Theme.of(context).hintColor),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildCurrentState() {
     if (_currentStepIndex == -1) return _buildUploadSection();
