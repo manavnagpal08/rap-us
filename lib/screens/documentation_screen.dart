@@ -148,6 +148,43 @@ class DocumentationScreen extends StatelessWidget {
             ),
           ),
           
+          // Services List Section
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Renovation & Repair Services',
+                    style: GoogleFonts.outfit(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      _buildServiceChip('Plumbing'),
+                      _buildServiceChip('Electrical'),
+                      _buildServiceChip('Carpentry'),
+                      _buildServiceChip('Painting'),
+                      _buildServiceChip('HVAC'),
+                      _buildServiceChip('Roofing'),
+                      _buildServiceChip('Flooring'),
+                      _buildServiceChip('Masonry'),
+                      _buildServiceChip('Drywall'),
+                    ],
+                  ),
+                  const SizedBox(height: 48),
+                ],
+              ),
+            ),
+          ),
+          
           // Footer
           SliverToBoxAdapter(
             child: Padding(
@@ -155,7 +192,7 @@ class DocumentationScreen extends StatelessWidget {
               child: Center(
                 child: Text(
                   '© 2026 RAP US Technologies. All rights reserved.',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.outfit(
                     color: const Color(0xFF94A3B8),
                     fontSize: 14,
                   ),
@@ -218,6 +255,25 @@ class DocumentationScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildServiceChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.outfit(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF0055FF),
+        ),
       ),
     );
   }
