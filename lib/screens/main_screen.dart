@@ -159,6 +159,51 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
             const Spacer(),
+            // Search Bar (Center-ish)
+            if (MediaQuery.of(context).size.width > 800)
+              Container(
+                width: 400,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search projects, contractors...',
+                    hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
+                    prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF94A3B8)),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            const Spacer(),
+            // Theme Toggle
+            ValueListenableBuilder<ThemeMode>(
+              valueListenable: AppTheme.themeModeNotifier,
+              builder: (context, mode, child) {
+                final isDark = mode == ThemeMode.dark;
+                return IconButton(
+                  icon: Icon(
+                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                    color: const Color(0xFF64748B),
+                  ),
+                  onPressed: () {
+                    AppTheme.themeModeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
+                  },
+                  tooltip: 'Toggle Theme',
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            // Notification Bell
+            IconButton(
+              icon: const Icon(Icons.notifications_none_rounded, color: Color(0xFF64748B)),
+              onPressed: () {},
+              tooltip: 'Notifications',
+            ),
+            const SizedBox(width: 12),
             // User Profile / Guest Menu
             if (user != null)
               _buildUserMenu(user)

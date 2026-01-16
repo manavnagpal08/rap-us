@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class DocumentationScreen extends StatelessWidget {
   const DocumentationScreen({super.key});
@@ -76,28 +77,28 @@ class DocumentationScreen extends StatelessWidget {
                   title: 'Smart Estimates',
                   description: 'Our AI analyzes object type, dimensions, and materials from a single photo to provide instant cost projections.',
                   accentColor: const Color(0xFF0055FF),
-                ),
+                ).animate().fadeIn(delay: 0.ms).slideX(begin: -0.2),
                 _buildInfoCard(
                   context,
                   icon: Icons.verified_user_outlined,
                   title: 'Verified Pros',
                   description: 'Every contractor on RAP undergoes a rigorous verification process to ensure quality and reliability.',
                   accentColor: const Color(0xFF10B981),
-                ),
+                ).animate().fadeIn(delay: 100.ms).slideX(begin: 0.2),
                 _buildInfoCard(
                   context,
                   icon: Icons.eco_outlined,
                   title: 'Green Advantage',
                   description: 'We suggest sustainable material alternatives that can save you money and protect the environment.',
                   accentColor: const Color(0xFFF59E0B),
-                ),
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
                 _buildInfoCard(
                   context,
                   icon: Icons.security_outlined,
                   title: 'Secure Payments',
                   description: 'Built-in security features like 2FA and Biometrics keep your financial and project data safe.',
                   accentColor: const Color(0xFF6366F1),
-                ),
+                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
               ]),
             ),
           ),

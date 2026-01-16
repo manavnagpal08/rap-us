@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/services/pdf_service.dart';
@@ -44,7 +45,7 @@ class HistoryScreen extends StatelessWidget {
                         children: [
                           Text(l10n.activeJobs.toUpperCase(), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).hintColor.withValues(alpha: 0.5), letterSpacing: 1.5)),
                           const SizedBox(height: 16),
-                          ...activeJobs.map((job) => _buildActiveJobCard(context, job)),
+                          ...activeJobs.asMap().entries.map((e) => _buildActiveJobCard(context, e.value).animate(delay: (e.key * 50).ms).fadeIn().slideX(begin: 0.1)),
                           const SizedBox(height: 32),
                         ],
                       );
@@ -72,7 +73,10 @@ class HistoryScreen extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final item = history[index];
                           final date = item['createdAt'] != null ? (item['createdAt'] as Timestamp).toDate() : DateTime.now();
-                          return _buildHistoryCard(context, item, date, pdf);
+                          return _buildHistoryCard(context, item, date, pdf)
+                              .animate(delay: (index * 50).ms)
+                              .fadeIn()
+                              .slideY(begin: 0.1);
                         },
                       );
                     },
@@ -80,9 +84,6 @@ class HistoryScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -210,11 +210,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width > 600 ? 24 : 16, vertical: 40),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width > 600 ? 24 : 16, vertical: 40),
+              child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
+                  constraints: const BoxConstraints(maxWidth: 900),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 500),
                     child: _buildCurrentState(),
@@ -230,23 +230,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
   Widget _buildCurrentState() {
-    if (_currentStepIndex == -1) return _buildUploadSection();
+    if (_currentStepIndex == -1) return _buildDashboardAndUpload();
     if (_currentStepIndex >= 0 && _currentStepIndex < 99) return _buildQuestionSection();
     return _buildResultSection();
   }
 
-  Widget _buildUploadSection() {
+  Widget _buildDashboardAndUpload() {
+    final user = FirebaseAuth.instance.currentUser;
     return Column(
-      key: const ValueKey('upload'),
+      key: const ValueKey('dashboard'),
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Welcome Header
+        if (user != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back, ${user.displayName?.split(' ')[0] ?? 'User'}!',
+                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                Text(
+                  'Here is what\'s happening with your projects today.',
+                  style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF64748B)),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().slideX(begin: -0.1),
+
+        // Quick Stats Row
+        _buildQuickStats().animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+        const SizedBox(height: 48),
+
+        // Upload Section
         Container(
-          padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 40 : 24),
+          width: double.infinity,
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 48 : 24),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 15)),
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, offset: const Offset(0, 20)),
             ],
           ),
           child: Column(
@@ -255,68 +282,121 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0055FF), Color(0xFF00AAFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                  ],
                 ),
-                child: Icon(Icons.add_a_photo_outlined, size: 40, color: Theme.of(context).colorScheme.primary),
+                child: const Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 32),
               Text(
-                'Start New Estimate',
+                'Start New Project',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black),
               ),
               const SizedBox(height: 12),
               Text(
-                'Upload an image of what you want to build or repair.\nOur AI will handle the rest.',
-                style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).hintColor, height: 1.5),
+                'Snap a photo or upload an image to generate an instant,\nAI-powered project estimate.',
+                style: GoogleFonts.inter(fontSize: 18, color: const Color(0xFF64748B), height: 1.5),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton.icon(
+                  _buildLargeActionButton(
                     onPressed: () => _pickImage(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt_rounded, color: Colors.white),
-                    label: const Text('Camera'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    ),
+                    icon: Icons.camera_alt_rounded,
+                    label: 'Take Photo',
+                    color: const Color(0xFF0055FF),
                   ),
-                  ElevatedButton.icon(
+                  const SizedBox(width: 20),
+                  _buildLargeActionButton(
                     onPressed: () => _pickImage(ImageSource.gallery),
-                    icon: const Icon(Icons.photo_library_rounded, color: Colors.white),
-                    label: const Text('Gallery'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    ),
+                    icon: Icons.photo_library_rounded,
+                    label: 'From Gallery',
+                    color: const Color(0xFF10B981),
                   ),
                 ],
               ),
             ],
           ),
-        ),
+        ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
+        
         const SizedBox(height: 48),
-        _buildBenefitGrid(),
+        _buildBenefitGrid().animate().fadeIn(delay: 300.ms),
       ],
+    );
+  }
+
+  Widget _buildQuickStats() {
+    return Row(
+      children: [
+        _statCard('Active Estimates', '12', Icons.description_outlined, const Color(0xFF0055FF)),
+        const SizedBox(width: 20),
+        _statCard('Total Savings', '\$1.4k', Icons.eco_outlined, const Color(0xFF10B981)),
+        const SizedBox(width: 20),
+        _statCard('Pro Connections', '48', Icons.group_outlined, const Color(0xFF6366F1)),
+      ],
+    );
+  }
+
+  Widget _statCard(String title, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 20),
+            Text(value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black)),
+            Text(title, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLargeActionButton({required VoidCallback onPressed, required IconData icon, required String label, required Color color}) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: Colors.white),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
   Widget _buildBenefitGrid() {
     return Row(
       children: [
-        _benefitItem(Icons.bolt, 'Instant', 'AI-driven analysis'),
-        const SizedBox(width: 24),
-        _benefitItem(Icons.verified_outlined, 'Accurate', 'Market price data'),
-        const SizedBox(width: 24),
-        _benefitItem(Icons.picture_as_pdf_outlined, 'Export', 'PDF ready format'),
+        _benefitItem(Icons.bolt_rounded, 'Instant Analysis', 'Powered by TruthShield'),
+        const SizedBox(width: 20),
+        _benefitItem(Icons.verified_rounded, 'Verified Pros', 'Top-rated contractors'),
+        const SizedBox(width: 20),
+        _benefitItem(Icons.security_rounded, 'Secure Pay', 'Escrow protection'),
       ],
     );
   }

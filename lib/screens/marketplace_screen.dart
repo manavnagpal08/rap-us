@@ -103,7 +103,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             mainAxisExtent: 280,
           ),
           itemCount: contractors.length,
-          itemBuilder: (context, index) => _buildContractorCard(context, contractors[index]).animate().fadeIn(delay: (index * 50).ms).slideY(begin: 0.1, end: 0),
+          itemBuilder: (context, index) => _buildContractorCard(context, contractors[index])
+              .animate(delay: (index * 100).ms)
+              .fadeIn(duration: 500.ms)
+              .scale(begin: const Offset(0.8, 0.8), curve: Curves.outBack)
+              .slideY(begin: 0.2, end: 0),
         );
       },
     );
@@ -130,7 +134,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             mainAxisExtent: 280,
           ),
           itemCount: jobs.length,
-          itemBuilder: (context, index) => _buildJobCard(context, jobs[index]).animate().fadeIn(delay: (index * 50).ms).slideY(begin: 0.1, end: 0),
+          itemBuilder: (context, index) => _buildJobCard(context, jobs[index])
+              .animate(delay: (index * 100).ms)
+              .fadeIn(duration: 500.ms)
+              .scale(begin: const Offset(0.8, 0.8), curve: Curves.outBack)
+              .slideY(begin: 0.2, end: 0),
         );
       },
     );
