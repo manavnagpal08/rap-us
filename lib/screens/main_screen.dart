@@ -66,100 +66,104 @@ class _MainScreenState extends State<MainScreen> {
           _buildTopHeader(),
           const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
           Expanded(
-            child: Row(
+            child: Stack(
               children: [
-                // Sidebar
-                NavigationRail(
-                  backgroundColor: const Color(0xFFFBFBFE),
-                  elevation: 0,
-                  extended: MediaQuery.of(context).size.width > 1200,
-                  minExtendedWidth: 200,
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-                  labelType: MediaQuery.of(context).size.width > 1200 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
-                  selectedLabelTextStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF0055FF)),
-                  unselectedLabelTextStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
-                  selectedIconTheme: const IconThemeData(color: Color(0xFF0055FF)),
-                  unselectedIconTheme: const IconThemeData(color: Color(0xFF64748B)),
-                  indicatorColor: const Color(0xFF0055FF).withOpacity(0.1),
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.description_outlined),
-                      selectedIcon: Icon(Icons.description),
-                      label: Text('Estimates'),
+                Row(
+                  children: [
+                    // Sidebar
+                    NavigationRail(
+                      backgroundColor: const Color(0xFFFBFBFE),
+                      elevation: 0,
+                      extended: MediaQuery.of(context).size.width > 1200,
+                      minExtendedWidth: 200,
+                      selectedIndex: _selectedIndex,
+                      onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+                      labelType: MediaQuery.of(context).size.width > 1200 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                      selectedLabelTextStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF0055FF)),
+                      unselectedLabelTextStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                      selectedIconTheme: const IconThemeData(color: Color(0xFF0055FF)),
+                      unselectedIconTheme: const IconThemeData(color: Color(0xFF64748B)),
+                      indicatorColor: const Color(0xFF0055FF).withOpacity(0.1),
+                      destinations: const [
+                        NavigationRailDestination(
+                          icon: Icon(Icons.description_outlined),
+                          selectedIcon: Icon(Icons.description),
+                          label: Text('Estimates'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.group_outlined),
+                          selectedIcon: Icon(Icons.group),
+                          label: Text('Contractors'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.shopping_bag_outlined),
+                          selectedIcon: Icon(Icons.shopping_bag),
+                          label: Text('My Orders'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.settings_outlined),
+                          selectedIcon: Icon(Icons.settings),
+                          label: Text('Settings'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.info_outline),
+                          selectedIcon: Icon(Icons.info),
+                          label: Text('About Us'),
+                        ),
+                      ],
                     ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.group_outlined),
-                      selectedIcon: Icon(Icons.group),
-                      label: Text('Contractors'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.shopping_bag_outlined),
-                      selectedIcon: Icon(Icons.shopping_bag),
-                      label: Text('My Orders'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.settings_outlined),
-                      selectedIcon: Icon(Icons.settings),
-                      label: Text('Settings'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.info_outline),
-                      selectedIcon: Icon(Icons.info),
-                      label: Text('About Us'),
+                    const VerticalDivider(thickness: 1, width: 1, color: Color(0xFFEEEEEE)),
+                    // Main Content
+                    Expanded(
+                      child: screens[_selectedIndex],
                     ),
                   ],
                 ),
-                const VerticalDivider(thickness: 1, width: 1, color: Color(0xFFEEEEEE)),
-                // Main Content
-                Expanded(
-                  child: screens[_selectedIndex],
+                
+                // Floating Chatbot Button
+                Positioned(
+                  right: 24,
+                  bottom: 24,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _showChat = !_showChat),
+                      child: Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                          border: Border.all(color: const Color(0xFF0055FF).withOpacity(0.1), width: 2),
+                        ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/robot_avatar.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ).animate(target: _showChat ? 0 : 1).shake(hz: 2, curve: Curves.easeInOut).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
+                    ),
+                  ),
                 ),
+
+                // Chat Overlay
+                if (_showChat)
+                  Positioned(
+                    right: 24,
+                    bottom: 100,
+                    child: _buildChatBotUI().animate().fadeIn().scale(alignment: Alignment.bottomRight),
+                  ),
               ],
             ),
           ),
-          
-          // Floating Chatbot Button
-          Positioned(
-            right: 24,
-            bottom: 24,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () => setState(() => _showChat = !_showChat),
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                    border: Border.all(color: const Color(0xFF0055FF).withOpacity(0.1), width: 2),
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/robot_avatar.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ).animate(target: _showChat ? 0 : 1).shake(hz: 2, curve: Curves.easeInOut).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
-              ),
-            ),
-          ),
-
-          // Chat Overlay
-          if (_showChat)
-            Positioned(
-              right: 24,
-              bottom: 100,
-              child: _buildChatBotUI().animate().fadeIn().scale(alignment: Alignment.bottomRight),
-            ),
         ],
       ),
     );

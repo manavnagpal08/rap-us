@@ -4,6 +4,7 @@ import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:rap_app/firebase_options.dart';
 import 'package:rap_app/screens/splash_screen.dart';
+import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/theme/app_theme.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -63,7 +64,7 @@ class RapApp extends StatelessWidget {
                 GlobalCupertinoLocalizations.delegate,
               ],
               supportedLocales: AppLocalizations.supportedLocales,
-              home: const SplashScreen(),
+              home: MainScreen(),
             );
           },
         );

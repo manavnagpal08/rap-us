@@ -14,6 +14,7 @@ import 'package:rap_app/theme/app_theme.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:rap_app/screens/login_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -269,22 +270,66 @@ class _HomeScreenState extends State<HomeScreen> {
           style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFEEEEEE)),
-          ),
-          child: Column(
-            children: [
-              _buildActivityItem('Estimate Created', 'Kitchen Renovation', '2 mins ago', Icons.description_outlined, Colors.blue),
-              const Divider(height: 32),
-              _buildActivityItem('Message Received', 'From: Mike The Builder', '1 hour ago', Icons.chat_bubble_outline, Colors.green),
-              const Divider(height: 32),
-              _buildActivityItem('Project Update', 'Bathroom Tile: Materials Delivered', 'Yesterday', Icons.local_shipping_outlined, Colors.orange),
-            ],
-          ),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('estimates')
+              .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+              .orderBy('createdAt', descending: true)
+              .limit(3)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFEEEEEE)),
+                ),
+                child: Center(
+                  child: Text(
+                    'No recent activity yet. Start your first estimate!',
+                    style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+                  ),
+                ),
+              );
+            }
+
+            final docs = snapshot.data!.docs;
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFEEEEEE)),
+              ),
+              child: Column(
+                children: docs.asMap().entries.map((entry) {
+                  final data = entry.value.data() as Map<String, dynamic>;
+                  final isLast = entry.key == docs.length - 1;
+                  // Handle Timestamp or other date formats properly
+                  String time = 'Just now';
+                  if (data['createdAt'] != null) {
+                     // Simple elapsed time logic could be added here or just show nothing for cleanliness
+                     // For now, static 'Recent' is safer than crashing on date parsing or importing logic
+                     time = 'Recent'; 
+                  }
+                  
+                  return Column(
+                    children: [
+                      _buildActivityItem(
+                        'Estimate Created', 
+                        data['item_summary'] ?? 'New Project', 
+                        time, 
+                        Icons.description_outlined, 
+                        Colors.blue
+                      ),
+                      if (!isLast) const Divider(height: 32),
+                    ],
+                  );
+                }).toList(),
+              ),
+            );
+          },
         ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.05),
 
         const SizedBox(height: 48),

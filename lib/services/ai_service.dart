@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:dart_openai/dart_openai.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:rap_app/services/database_service.dart';
+import 'package:rap_app/secrets.dart';
 
 class AiService {
   final DatabaseService _db = DatabaseService();
   
   // Fallbacks in case Firestore fetch fails or isn't set yet
-  static const String _defaultGeminiKey = "AIzaSyCob6dZZSd3_6gpDN8AMkuc_GHxyAQkFbA";
+  static const String _defaultGeminiKey = Secrets.geminiApiKey;
   static const String _defaultProvider = "gemini";
 
   Future<Map<String, dynamic>> _getSettings() async {

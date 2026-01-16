@@ -35,12 +35,76 @@
 </head>
 
 <body>
-  <!-- Firebase SDKs (Compat versions are more stable for Flutter bridge) -->
+  <style>
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #ffffff;
+      flex-direction: column;
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0055FF;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+
+  <div class="loading-container" id="loading">
+    <img src="assets/assets/images/logo.png" class="logo" alt="RAP Logo" onerror="this.style.display='none'">
+    <div class="spinner"></div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
   <script>
+    // Remove loading screen when app loads
+    window.addEventListener('load', function () {
+      // Optional: You can remove this div from Dart code or let Flutter cover it.
+      // Flutter Web covers the body content automatically when it draws the first frame.
+    });
+
     const firebaseConfig = {
       apiKey: "AIzaSyDS9kBk1F1cjPTY6pgkwIm5peFkMBf8Dnw",
       authDomain: "rap-us-estimation.firebaseapp.com",
