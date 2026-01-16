@@ -856,28 +856,74 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDetailSection(String title, Map<String, dynamic> data) {
     Widget content;
     if (title == 'Required Materials') {
-        final materials = data['materials'] as List;
+        final options = data['material_options'] as List?;
+        if (options != null && options.isNotEmpty) {
+           content = Column(
+             children: options.map<Widget>((opt) {
+               final tier = opt['tier'] ?? 'Standard';
+               Color tierColor;
+               if (tier == 'Best') tierColor = const Color(0xFFD4AF37); // Gold
+               else if (tier == 'Better') tierColor = const Color(0xFFC0C0C0); // Silver
+               else tierColor = const Color(0xFFCD7F32); // Bronze/Good
 
-        content = Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
-            columns: [
-              DataColumn(label: Text('Item', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('Est. Cost', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-            ],
-            rows: materials.map<DataRow>((m) => DataRow(
-              cells: [
-                DataCell(Text(m['name'], style: GoogleFonts.inter(color: const Color(0xFF1E293B)))),
-                DataCell(Text('\$${m['estimated_cost_usd']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)))),
-              ],
-            )).toList(),
-          ),
-        );
+               return Container(
+                 margin: const EdgeInsets.only(bottom: 16),
+                 padding: const EdgeInsets.all(16),
+                 decoration: BoxDecoration(
+                   color: Colors.white,
+                   borderRadius: BorderRadius.circular(16),
+                   border: Border.all(color: tierColor.withOpacity(0.3), width: 1),
+                   boxShadow: [BoxShadow(color: tierColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                 ),
+                 child: Row(
+                   children: [
+                     Container(
+                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                       decoration: BoxDecoration(color: tierColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                       child: Text(tier, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: tierColor)),
+                     ),
+                     const SizedBox(width: 16),
+                     Expanded(
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Text(opt['name'] ?? 'Unknown', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
+                           const SizedBox(height: 4),
+                           Text('Pro: ${opt['pros'] ?? ''}', style: GoogleFonts.inter(fontSize: 12, color: Colors.green[700])),
+                           Text('Con: ${opt['cons'] ?? ''}', style: GoogleFonts.inter(fontSize: 12, color: Colors.red[400])),
+                         ],
+                       ),
+                     ),
+                     Text('\$${opt['estimated_cost_usd']}', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
+                   ],
+                 ),
+               );
+             }).toList(),
+           );
+        } else {
+            // Fallback for old estimates
+            final materials = data['materials'] as List? ?? [];
+            content = Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: DataTable(
+                headingRowColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
+                columns: [
+                  DataColumn(label: Text('Item', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                  DataColumn(label: Text('Est. Cost', style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
+                ],
+                rows: materials.map<DataRow>((m) => DataRow(
+                  cells: [
+                    DataCell(Text(m['name'], style: GoogleFonts.inter(color: const Color(0xFF1E293B)))),
+                    DataCell(Text('\$${m['estimated_cost_usd']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)))),
+                  ],
+                )).toList(),
+              ),
+            );
+        }
     } else {
         content = Text(data['repair_vs_replace_note'], style: GoogleFonts.inter(color: const Color(0xFF64748B), height: 1.6));
     }

@@ -13,6 +13,7 @@ import 'package:rap_app/screens/chat_list_screen.dart';
 import 'package:rap_app/screens/login_screen.dart';
 import 'package:rap_app/screens/documentation_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:rap_app/services/ai_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -385,161 +386,242 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  final TextEditingController _chatController = TextEditingController();
+  final List<Map<String, String>> _chatMessages = [
+    {'role': 'bot', 'text': "Hello! I'm your RAP project assistant. How can I help you with your estimation or contractor search today?"},
+    {'role': 'bot', 'text': "You can ask me about:\n• Recent estimates\n• Contractor availability\n• Project timelines"},
+  ];
+  final ScrollController _scrollController = ScrollController();
+  final AiService _aiService = AiService();
+  bool _isChatLoading = false;
+
+  void _sendMessage() async {
+    final text = _chatController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _chatMessages.add({'role': 'user', 'text': text});
+      _chatController.clear();
+      _isChatLoading = true;
+    });
+    
+    _scrollToBottom();
+
+    // Get AI response
+    try {
+        final response = await _aiService.getHelpResponse(text);
+        if (mounted) {
+            setState(() {
+                _chatMessages.add({'role': 'bot', 'text': response});
+                _isChatLoading = false;
+            });
+            _scrollToBottom();
+        }
+    } catch (e) {
+        if (mounted) {
+            setState(() {
+                 _chatMessages.add({'role': 'bot', 'text': "I'm having trouble connecting. Please try again."});
+                 _isChatLoading = false;
+            });
+        }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   Widget _buildChatBotUI() {
     return Container(
-      width: 380,
-      height: 520,
+      width: 400,
+      height: 600,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 40,
+            color: const Color(0xFF0055FF).withOpacity(0.15),
+            blurRadius: 60,
             offset: const Offset(0, 20),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: Colors.white, width: 2),
       ),
-      child: Column(
-        children: [
-          // Chat Header
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0055FF),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(28),
-                topRight: Radius.circular(28),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: Column(
+          children: [
+            // Chat Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0055FF), Color(0xFF0088FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset('assets/images/robot_avatar.png'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'RAP Assistant',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Online • Powered by AI',
-                      style: GoogleFonts.inter(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => setState(() => _showChat = false),
-                ),
-              ],
-            ),
-          ),
-          
-          // Chat Messages
-          Expanded(
-            child: Container(
-              color: const Color(0xFFF8FAFC),
-              padding: const EdgeInsets.all(20),
-              child: ListView(
+              child: Row(
                 children: [
-                  _buildBotMessage("Hello! I'm your RAP project assistant. How can I help you with your estimation or contractor search today?"),
-                  const SizedBox(height: 12),
-                  _buildBotMessage("You can ask me about:\n• Recent estimates\n• Contractor availability\n• Project timelines"),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                    child: ClipOval(child: Image.asset('assets/images/robot_avatar.png', fit: BoxFit.cover)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('RAP Assistant', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Online • AI Powered', style: GoogleFonts.inter(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => setState(() => _showChat = false),
+                  ),
                 ],
               ),
             ),
-          ),
-
-          // Chat Input
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
+            
+            // Chat Messages
+            Expanded(
+              child: Container(
+                color: const Color(0xFFF8FAFC),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(20),
+                  itemCount: _chatMessages.length + (_isChatLoading ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _chatMessages.length) {
+                        return Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const SizedBox(
+                                    width: 20, 
+                                    height: 20, 
+                                    child: CircularProgressIndicator(strokeWidth: 2)
+                                ),
+                            ),
+                        );
+                    }
+                    
+                    final msg = _chatMessages[index];
+                    final isUser = msg['role'] == 'user';
+                    return isUser ? _buildUserMessage(msg['text']!) : _buildBotMessage(msg['text']!);
+                  },
+                ),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
-                        border: InputBorder.none,
+
+            // Chat Input
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(color: Colors.white),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: TextField(
+                        controller: _chatController,
+                        onSubmitted: (_) => _sendMessage(),
+                        decoration: InputDecoration(
+                          hintText: 'Type a message...',
+                          hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0055FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                    onPressed: () {},
-                  ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  InkWell(
+                    onTap: _sendMessage,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(colors: [Color(0xFF0055FF), Color(0xFF0088FF)]),
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Color(0x400055FF), blurRadius: 10, offset: Offset(0, 4))],
+                      ),
+                      child: const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+                    ),
+                  ).animate(target: 1).scale(curve: Curves.easeOutBack),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+  
+  Widget _buildUserMessage(String text) {
+    return Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+            margin: const EdgeInsets.only(bottom: 12, left: 60),
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFF0055FF), Color(0xFF0077FF)]),
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(4),
+                ),
+                boxShadow: [BoxShadow(color: Color(0x200055FF), blurRadius: 8, offset: Offset(0, 4))],
+            ),
+            child: Text(text, style: GoogleFonts.inter(color: Colors.white, fontSize: 14, height: 1.5)),
+        ),
+    ).animate().fadeIn().slideX(begin: 0.1);
   }
 
   Widget _buildBotMessage(String text) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(right: 60),
+        margin: const EdgeInsets.only(bottom: 12, right: 60),
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
             bottomRight: Radius.circular(20),
             bottomLeft: Radius.circular(4),
           ),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
+          border: Border.all(color: const Color(0xFFF1F5F9)),
         ),
         child: Text(
           text,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            color: const Color(0xFF1E293B),
-            height: 1.5,
-          ),
+          style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1E293B), height: 1.5),
         ),
       ),
     ).animate().fadeIn().slideX(begin: -0.1);

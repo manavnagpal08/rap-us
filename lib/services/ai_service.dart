@@ -149,11 +149,11 @@ CALCULATION LOGIC:
 1. Identify the object type and standard dimensions if not provided.
 2. Estimate standard US labor cost.
 3. Apply 20% discount to labor.
-4. Estimate material cost using US averages.
+4. Estimate material cost using US averages. Provide 3 DISTINCT options (Good, Better, Best) varying in quality and price.
 5. Provide a 'Repair vs Replace' recommendation.
 6. GREEN ADVANTAGE: Suggest a sustainable alternative (e.g., low-flow faucet, recycled wood, LED integration) and calculate estimated 12-month savings.
 7. ROI INSIGHT: Estimate how much this specific project adds to the property value based on US real estate trends.
-8. Calculate low/likely/high range.
+8. Calculate low/likely/high range based on the 'Better' option as the baseline.
 
 JSON SCHEMA:
 {
@@ -161,10 +161,27 @@ JSON SCHEMA:
   "repair_or_build": "$repairOrBuild",
   "dimensions": "Final used dimensions (e.g. '6 ft x 4 ft' or 'Standard Size')",
   "location": "$location",
-  "materials": [
+  "material_options": [
     {
-      "name": "Material Name",
-      "estimated_cost_usd": "10.00"
+      "tier": "Good",
+      "name": "Material Name (e.g. Pine)",
+      "estimated_cost_usd": "500",
+      "pros": "Affordable, readily available",
+      "cons": "Less durable, requires maintenance"
+    },
+    {
+      "tier": "Better",
+      "name": "Material Name (e.g. Oak Plywood)",
+      "estimated_cost_usd": "850",
+      "pros": "Durable, good finish",
+      "cons": "Moderate cost"
+    },
+    {
+      "tier": "Best",
+      "name": "Material Name (e.g. Mahogany Solid)",
+      "estimated_cost_usd": "1500",
+      "pros": "Premium look, long-lasting",
+      "cons": "Expensive, heavy"
     }
   ],
   "material_cost_total_usd": "10.00",
