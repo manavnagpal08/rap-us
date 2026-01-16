@@ -12,6 +12,7 @@ import 'package:rap_app/theme/app_theme.dart';
 import 'package:rap_app/screens/chat_list_screen.dart';
 import 'package:rap_app/screens/login_screen.dart';
 import 'package:rap_app/screens/documentation_screen.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -24,6 +25,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   final AuthService _auth = AuthService();
   bool _isLoading = true;
+  bool _showChat = false;
 
   @override
   void initState() {
@@ -92,9 +94,9 @@ class _MainScreenState extends State<MainScreen> {
                       label: Text('Contractors'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.history_outlined),
-                      selectedIcon: Icon(Icons.history),
-                      label: Text('History'),
+                      icon: Icon(Icons.shopping_bag_outlined),
+                      selectedIcon: Icon(Icons.shopping_bag),
+                      label: Text('My Orders'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.settings_outlined),
@@ -116,6 +118,48 @@ class _MainScreenState extends State<MainScreen> {
               ],
             ),
           ),
+          
+          // Floating Chatbot Button
+          Positioned(
+            right: 24,
+            bottom: 24,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => setState(() => _showChat = !_showChat),
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                    border: Border.all(color: const Color(0xFF0055FF).withOpacity(0.1), width: 2),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/robot_avatar.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ).animate(target: _showChat ? 0 : 1).shake(hz: 2, curve: Curves.easeInOut).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
+              ),
+            ),
+          ),
+
+          // Chat Overlay
+          if (_showChat)
+            Positioned(
+              right: 24,
+              bottom: 100,
+              child: _buildChatBotUI().animate().fadeIn().scale(alignment: Alignment.bottomRight),
+            ),
         ],
       ),
     );
@@ -130,26 +174,14 @@ class _MainScreenState extends State<MainScreen> {
         bottom: false,
         child: Row(
           children: [
-            // Logo
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0055FF),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Center(
-                child: Text(
-                  'R',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+            // New Logo
+            Image.asset(
+              'assets/images/logo.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Text(
               'RAP',
               style: GoogleFonts.outfit(
@@ -179,6 +211,38 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             const Spacer(),
+            
+            // Language Switcher
+            ValueListenableBuilder<Locale>(
+              valueListenable: AppTheme.localeNotifier,
+              builder: (context, locale, child) {
+                return PopupMenuButton<String>(
+                  tooltip: 'Change Language',
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      locale.languageCode.toUpperCase(),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF64748B)),
+                    ),
+                  ),
+                  onSelected: (String code) {
+                    AppTheme.localeNotifier.value = Locale(code);
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    _buildLanguageItem('en', 'English'),
+                    _buildLanguageItem('hi', 'हिन्दी (Hindi)'),
+                    _buildLanguageItem('es', 'Español'),
+                    _buildLanguageItem('pt', 'Português'),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+
             // Theme Toggle
             ValueListenableBuilder<ThemeMode>(
               valueListenable: AppTheme.themeModeNotifier,
@@ -314,6 +378,173 @@ class _MainScreenState extends State<MainScreen> {
           child: const Text('Sign In', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
+    );
+  }
+
+  Widget _buildChatBotUI() {
+    return Container(
+      width: 380,
+      height: 520,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        children: [
+          // Chat Header
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0055FF),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(28),
+                topRight: Radius.circular(28),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(
+                    child: Image.asset('assets/images/robot_avatar.png'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'RAP Assistant',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Online • Powered by AI',
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => setState(() => _showChat = false),
+                ),
+              ],
+            ),
+          ),
+          
+          // Chat Messages
+          Expanded(
+            child: Container(
+              color: const Color(0xFFF8FAFC),
+              padding: const EdgeInsets.all(20),
+              child: ListView(
+                children: [
+                  _buildBotMessage("Hello! I'm your RAP project assistant. How can I help you with your estimation or contractor search today?"),
+                  const SizedBox(height: 12),
+                  _buildBotMessage("You can ask me about:\n• Recent estimates\n• Contractor availability\n• Project timelines"),
+                ],
+              ),
+            ),
+          ),
+
+          // Chat Input
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0055FF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                    onPressed: () {},
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBotMessage(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(right: 60),
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+            bottomLeft: Radius.circular(4),
+          ),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF1E293B),
+            height: 1.5,
+          ),
+        ),
+      ),
+    ).animate().fadeIn().slideX(begin: -0.1);
+  }
+
+  PopupMenuItem<String> _buildLanguageItem(String code, String name) {
+    return PopupMenuItem<String>(
+      value: code,
+      child: Text(name, style: GoogleFonts.inter(fontSize: 14)),
     );
   }
 }

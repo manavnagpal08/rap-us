@@ -43,15 +43,16 @@ class AiService {
       "material": "Dominant material detected (e.g. 'Oak Wood', 'Metal', 'Upholstery')",
       "confidence_score": 0.0 to 1.0,
       "questions": [
-        "A list of MAX 3 specific, relevant questions to ask the user to refine the estimate.",
-        "Example: 'Is the chair leg completely broken or just loose?'"
+        "A list of MAX 3 specific, customizable questions to refine the user's intent.",
+        "Example 1 (Repair): 'Do you need to replace the entire handle or just the latch?'",
+        "Example 2 (Build): 'Would you prefer a modern matte finish or a classic glossy look?'"
       ]
     }
     
     Rules:
-    - If confidence is high (>0.85), ask fewer questions (1 or 0).
-    - If confident about dimensions, include them clearly.
-    - Questions must be conditional and specific to the detected object.
+    - DO NOT ask basic questions like 'What is this?'. Assume the role of an expert.
+    - If confident about dimensions, include them; otherwise, ask a verification question like 'Is this roughly 6ft wide?'.
+    - Focus questions on INTENT (Repair vs Replace), STYLE (Modern vs Classic), or SPECIFIC DETAILS not visible (e.g., 'Is the plumbing inside copper or PVC?').
     """;
 
     if (provider == 'openai') {

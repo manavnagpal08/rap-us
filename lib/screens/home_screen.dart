@@ -73,12 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
         // If dimensions detected, use them. If not, add question.
         if (dimensions.isNotEmpty && dimensions.toLowerCase() != 'unknown') {
             _userInput['dimensions'] = dimensions;
-        } else {
-            questions.insert(0, "What are the approximate dimensions?");
         }
         
-        // Ensure we have basics if not auto-detected
-        if (analysis['object_type'] == null) questions.add("What is this object?");
+        // Remove forced basic questions. We rely on the AI's "expert" mode from the service.
+        // if (analysis['object_type'] == null) questions.add("What is this object?"); 
 
         if (mounted) {
           setState(() {
@@ -263,6 +261,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Quick Stats Row
         _buildQuickStats().animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+        const SizedBox(height: 32),
+
+        // Recent Activity
+        Text(
+          'Recent Activity',
+          style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFEEEEEE)),
+          ),
+          child: Column(
+            children: [
+              _buildActivityItem('Estimate Created', 'Kitchen Renovation', '2 mins ago', Icons.description_outlined, Colors.blue),
+              const Divider(height: 32),
+              _buildActivityItem('Message Received', 'From: Mike The Builder', '1 hour ago', Icons.chat_bubble_outline, Colors.green),
+              const Divider(height: 32),
+              _buildActivityItem('Project Update', 'Bathroom Tile: Materials Delivered', 'Yesterday', Icons.local_shipping_outlined, Colors.orange),
+            ],
+          ),
+        ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.05),
+
         const SizedBox(height: 48),
 
         // Upload Section
@@ -420,6 +444,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActivityItem(String title, String subtitle, String time, IconData icon, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.black)),
+              Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+            ],
+          ),
+        ),
+        Text(time, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8))),
+      ],
     );
   }
 
