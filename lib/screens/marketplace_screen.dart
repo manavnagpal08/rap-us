@@ -50,7 +50,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               child: Row(
                 children: [
                   _toggleButton(l10n.contractors, !_showJobs, () => setState(() => _showJobs = false)),
-                  _toggleButton('Job Board', _showJobs, () => setState(() => _showJobs = true)),
+                  _toggleButton(l10n.jobBoard, _showJobs, () => setState(() => _showJobs = true)),
                 ],
               ),
             ),
@@ -145,6 +145,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Widget _buildJobCard(BuildContext context, Map<String, dynamic> job) {
+    final l10n = AppLocalizations.of(context)!; // Added missing l10n definition
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -167,7 +168,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(job['title'] ?? 'Untitled Project', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(job['title'] ?? 'Untitled Project', maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
                     Text('Posted by ${job['customerName']}', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
                   ],
                 ),
@@ -191,7 +192,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             child: ElevatedButton(
               onPressed: () => _showBidDialog(context, job),
               style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: const Text('Submit Bid', style: TextStyle(color: Colors.white)),
+              child: Text(l10n.submitBid, style: const TextStyle(color: Colors.white)),
             ),
           ),
         ],
@@ -200,19 +201,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   void _showBidDialog(BuildContext context, Map<String, dynamic> job) {
+    final l10n = AppLocalizations.of(context)!;
     final amountController = TextEditingController(text: job['amount'].toString());
     final noteController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Submit Bid', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        title: Text(l10n.submitBid, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: amountController,
-              decoration: const InputDecoration(labelText: 'Bid Amount (\$)', prefixIcon: Icon(Icons.attach_money)),
+              decoration: InputDecoration(labelText: l10n.bidAmount, prefixIcon: const Icon(Icons.attach_money)),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
@@ -232,7 +234,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 'note': noteController.text,
               });
               if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bid submitted successfully!')));
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.bidSuccess)));
             },
             child: const Text('Submit'),
           ),
@@ -300,6 +302,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       ),
     );
   }
+
 
   Widget _buildContractorCard(BuildContext context, Map<String, dynamic> c) {
     final l10n = AppLocalizations.of(context)!;
@@ -403,7 +406,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Container(
           padding: const EdgeInsets.all(32),
-          width: 500,
+          width: MediaQuery.of(context).size.width < 600 ? double.infinity : 500,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

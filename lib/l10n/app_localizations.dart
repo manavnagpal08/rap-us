@@ -186,6 +186,36 @@ abstract class AppLocalizations {
   /// **'ROI Insight'**
   String get roiInsight;
 
+  /// No description provided for @emergencySos.
+  ///
+  /// In en, this message translates to:
+  /// **'EMERGENCY SOS'**
+  String get emergencySos;
+
+  /// No description provided for @broadcastUrgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Broadcast Urgent'**
+  String get broadcastUrgent;
+
+  /// No description provided for @findingPros.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding pros near you...'**
+  String get findingPros;
+
+  /// No description provided for @proAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro Accepted!'**
+  String get proAccepted;
+
+  /// No description provided for @milesAway.
+  ///
+  /// In en, this message translates to:
+  /// **'miles away'**
+  String get milesAway;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
@@ -797,6 +827,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset link sent to'**
   String get resetLinkSent;
+
+  /// No description provided for @estimates.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimates'**
+  String get estimates;
+
+  /// No description provided for @recentActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Activity'**
+  String get recentActivity;
+
+  /// No description provided for @welcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get welcomeBack;
+
+  /// No description provided for @rapBot.
+  ///
+  /// In en, this message translates to:
+  /// **'RAP Assistant'**
+  String get rapBot;
+
+  /// No description provided for @jobBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Board'**
+  String get jobBoard;
+
+  /// No description provided for @submitBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Bid'**
+  String get submitBid;
+
+  /// No description provided for @bidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid Amount (\$)'**
+  String get bidAmount;
+
+  /// No description provided for @bidSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid submitted successfully!'**
+  String get bidSuccess;
 }
 
 class _AppLocalizationsDelegate

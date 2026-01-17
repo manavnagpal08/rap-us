@@ -9,6 +9,7 @@ import 'package:rap_app/theme/app_theme.dart';
 import 'package:rap_app/screens/group_chat_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rap_app/screens/bid_comparison_screen.dart';
 
 class JobTrackingScreen extends StatefulWidget {
   final Map<String, dynamic> job;
@@ -21,7 +22,7 @@ class JobTrackingScreen extends StatefulWidget {
 
 class _JobTrackingScreenState extends State<JobTrackingScreen> {
   final DatabaseService _db = DatabaseService();
-  final AuthService _auth = AuthService();
+
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +53,47 @@ class _JobTrackingScreenState extends State<JobTrackingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildStatusCard(context, currentStep),
+                      
+                      // Bid Comparison Action for Pending Jobs
+                      if (status == 'pending')
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [const Color(0xFF6366F1), const Color(0xFF4F46E5)]),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: const [BoxShadow(color: Color(0x404F46E5), blurRadius: 20, offset: Offset(0, 8))],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16)),
+                                  child: const Icon(Icons.compare_arrows_rounded, color: Colors.white, size: 28),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('3 Contractors Replied', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
+                                      Text('Compare prices and pick the best value.', style: GoogleFonts.inter(fontSize: 13, color: Colors.white70)),
+                                    ],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => BidComparisonScreen(jobId: job['id'])));
+                                  },
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFF4F46E5)),
+                                  child: const Text('Compare'),
+                                ),
+                              ],
+                            ),
+                          ).animate().scale(),
+                        ),
+
                       if (job['aiAccuracyBadge'] != null) ...[
                         const SizedBox(height: 24),
                         _buildAccuracySection(context, job),
@@ -200,6 +242,7 @@ class _JobTrackingScreenState extends State<JobTrackingScreen> {
 
   void _shareProject(Map<String, dynamic> job) {
     final shareUrl = 'https://rap-us.web.app/project/${job['id']}';
+    // ignore: deprecated_member_use
     Share.share('Check out our project progress on RAP: $shareUrl');
   }
 
@@ -419,28 +462,28 @@ class _JobTrackingScreenState extends State<JobTrackingScreen> {
       lastDate: DateTime.now().add(const Duration(days: 30)),
     );
 
-    if (pickedDate != null && mounted) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: const TimeOfDay(hour: 10, minute: 0),
-      );
+    if (pickedDate == null || !mounted) return;
 
-      if (pickedTime != null && mounted) {
-        final bookingDateTime = DateTime(
-          pickedDate.year, pickedDate.month, pickedDate.day,
-          pickedTime.hour, pickedTime.minute,
-        );
-        
-        await _db.bookSiteVisit(job['contractorId'], job['id'], bookingDateTime);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking confirmed! Profile synced.')));
-        }
-      }
-    }
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 10, minute: 0),
+    );
+
+    if (pickedTime == null || !mounted) return;
+
+    final bookingDateTime = DateTime(
+      pickedDate.year, pickedDate.month, pickedDate.day,
+      pickedTime.hour, pickedTime.minute,
+    );
+    
+    await _db.bookSiteVisit(job['contractorId'], job['id'], bookingDateTime);
+    
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking confirmed! Profile synced.')));
   }
 
   void _navigateToTeamChat(BuildContext context, Map<String, dynamic> job) async {
-    final members = [job['customerId'], job['contractorId']];
+
     // In a real app we'd fetch or create the groupChatId
     // For demo, we use jobId as the groupChatId base
     final groupChatId = 'team_${job['id']}';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:rap_app/screens/login_screen.dart';
+
 import 'package:rap_app/screens/main_screen.dart';
-import 'package:rap_app/services/auth_service.dart';
+
 import 'package:rap_app/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  final AuthService _auth = AuthService();
+
 
   @override
   void initState() {
@@ -50,16 +50,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
+                width: 200,
+                height: 200,
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 80),
+                child: Image.asset('assets/images/logo.png'),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
               Text(
-                'RAP',
+                'RAP US',
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontSize: 56,
@@ -69,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
               const SizedBox(height: 8),
               Text(
-                'AI-POWERED PRECISION ESTIMATES',
+                'Precision Estimations & Market',
                 style: GoogleFonts.inter(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 14,

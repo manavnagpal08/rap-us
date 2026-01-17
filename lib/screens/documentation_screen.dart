@@ -8,16 +8,16 @@ class DocumentationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFE),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // Hero Header
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.fromLTRB(40, 60, 40, 40),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,7 +25,7 @@ class DocumentationScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0055FF).withOpacity(0.1),
+                      color: const Color(0xFF0055FF).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -44,7 +44,7 @@ class DocumentationScreen extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -52,7 +52,7 @@ class DocumentationScreen extends StatelessWidget {
                     'The future of home repair and renovation estimation.',
                     style: GoogleFonts.inter(
                       fontSize: 18,
-                      color: const Color(0xFF64748B),
+                      color: Theme.of(context).hintColor,
                     ),
                   ),
                 ],
@@ -64,8 +64,8 @@ class DocumentationScreen extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.all(40),
             sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: MediaQuery.of(context).size.width > 800 ? 2 : 1,
                 crossAxisSpacing: 32,
                 mainAxisSpacing: 32,
                 mainAxisExtent: 260,
@@ -131,7 +131,7 @@ class DocumentationScreen extends StatelessWidget {
                           'To bring transparency, efficiency, and intelligence to the home improvement industry through cutting-edge AI technology.',
                           style: GoogleFonts.inter(
                             fontSize: 16,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             height: 1.6,
                           ),
                         ),
@@ -161,7 +161,7 @@ class DocumentationScreen extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -169,15 +169,15 @@ class DocumentationScreen extends StatelessWidget {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _buildServiceChip('Plumbing'),
-                      _buildServiceChip('Electrical'),
-                      _buildServiceChip('Carpentry'),
-                      _buildServiceChip('Painting'),
-                      _buildServiceChip('HVAC'),
-                      _buildServiceChip('Roofing'),
-                      _buildServiceChip('Flooring'),
-                      _buildServiceChip('Masonry'),
-                      _buildServiceChip('Drywall'),
+                      _buildServiceChip(context, 'Plumbing'),
+                      _buildServiceChip(context, 'Electrical'),
+                      _buildServiceChip(context, 'Carpentry'),
+                      _buildServiceChip(context, 'Painting'),
+                      _buildServiceChip(context, 'HVAC'),
+                      _buildServiceChip(context, 'Roofing'),
+                      _buildServiceChip(context, 'Flooring'),
+                      _buildServiceChip(context, 'Masonry'),
+                      _buildServiceChip(context, 'Drywall'),
                     ],
                   ),
                   const SizedBox(height: 48),
@@ -215,12 +215,12 @@ class DocumentationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
+        border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -232,7 +232,7 @@ class DocumentationScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
+              color: accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: accentColor, size: 28),
@@ -243,7 +243,7 @@ class DocumentationScreen extends StatelessWidget {
             style: GoogleFonts.outfit(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -260,13 +260,13 @@ class DocumentationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildServiceChip(String label) {
+  Widget _buildServiceChip(BuildContext context, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Text(
         label,

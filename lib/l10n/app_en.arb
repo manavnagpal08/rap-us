@@ -12,6 +12,11 @@
   "export": "Export",
   "greenAdvantage": "Green Advantage",
   "roiInsight": "ROI Insight",
+  "emergencySos": "EMERGENCY SOS",
+  "broadcastUrgent": "Broadcast Urgent",
+  "findingPros": "Finding pros near you...",
+  "proAccepted": "Pro Accepted!",
+  "milesAway": "miles away",
   "settings": "Settings",
   "darkMode": "Dark Mode",
   "language": "Language",
@@ -113,5 +118,13 @@
   "twoFactorDisableExplanation": "Disabling 2FA removes the extra verification step. This makes logging in faster but less secure.",
   "setup2FA": "Setup 2FA",
   "turnOff": "Turn Off",
-  "resetLinkSent": "Reset link sent to"
+  "resetLinkSent": "Reset link sent to",
+  "estimates": "Estimates",
+  "recentActivity": "Recent Activity",
+  "welcomeBack": "Welcome back",
+  "rapBot": "RAP Assistant",
+  "jobBoard": "Job Board",
+  "submitBid": "Submit Bid",
+  "bidAmount": "Bid Amount ($)",
+  "bidSuccess": "Bid submitted successfully!"
 }

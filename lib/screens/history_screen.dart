@@ -183,7 +183,7 @@ class HistoryScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.history_rounded, size: 48, color: Theme.of(context).hintColor),
@@ -210,7 +210,7 @@ class HistoryScreen extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
       child: Text(
         level?.toUpperCase() ?? 'N/A',
         style: GoogleFonts.inter(color: color, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5),
@@ -257,7 +257,7 @@ class HistoryScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   item['repair_vs_replace_note'],
-                  style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), height: 1.6),
+                  style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), height: 1.6),
                 ),
                 
                 const SizedBox(height: 48),
@@ -311,10 +311,10 @@ class HistoryScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.8)]),
+        gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)]),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppTheme.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -326,17 +326,17 @@ class HistoryScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('IN PROGRESS', style: GoogleFonts.inter(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
-              Icon(Icons.timelapse_rounded, color: Colors.white.withOpacity(0.6)),
+              Icon(Icons.timelapse_rounded, color: Colors.white.withValues(alpha: 0.6)),
             ],
           ),
           const SizedBox(height: 20),
           Text(job['title'] ?? 'Repair Job', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-          Text('Contractor: ${job['contractorName'] ?? 'Assigned Contractor'}', style: GoogleFonts.inter(color: Colors.white.withOpacity(0.8))),
+          Text('Contractor: ${job['contractorName'] ?? 'Assigned Contractor'}', style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8))),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,

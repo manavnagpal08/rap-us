@@ -213,7 +213,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: referralCode,
                     trailing: TextButton(
                       onPressed: () {
-                        Share.share('Join me on RAP for AI-powered home build/repairs! Use my code $referralCode for a 20% labor discount on your first project.');
+                        // ignore: deprecated_member_use
+                      Share.share('Join me on RAP for AI-powered home build/repairs! Use my code $referralCode for a 20% labor discount on your first project.');
                       },
                       child: const Text('Share'),
                     ),

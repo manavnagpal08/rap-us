@@ -113,10 +113,15 @@ class _HomeScreenState extends State<HomeScreen> {
     String currentQ = _dynamicQuestions[_currentStepIndex].toLowerCase();
     String ans = _inputController.text;
     
-    if (currentQ.contains('dimension')) _userInput['dimensions'] = ans;
-    else if (currentQ.contains('where') || currentQ.contains('location')) _userInput['location'] = ans;
-    else if (currentQ.contains('repair') || currentQ.contains('build')) _userInput['repairOrBuild'] = ans;
-    else if (currentQ.contains('quality') || currentQ.contains('material')) _userInput['materialQuality'] = ans;
+    if (currentQ.contains('dimension')) {
+      _userInput['dimensions'] = ans;
+    } else if (currentQ.contains('where') || currentQ.contains('location')) {
+      _userInput['location'] = ans;
+    } else if (currentQ.contains('repair') || currentQ.contains('build')) {
+      _userInput['repairOrBuild'] = ans;
+    } else if (currentQ.contains('quality') || currentQ.contains('material')) {
+      _userInput['materialQuality'] = ans;
+    }
 
     _inputController.clear();
 
@@ -237,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildDashboardAndUpload() {
     final user = FirebaseAuth.instance.currentUser;
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       key: const ValueKey('dashboard'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,12 +255,12 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back, ${user.displayName?.split(' ')[0] ?? 'User'}!',
-                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                  '${l10n.welcomeBack}, ${user.displayName?.split(' ')[0] ?? 'User'}!',
+                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                 ),
                 Text(
                   'Here is what\'s happening with your projects today.',
-                  style: GoogleFonts.inter(fontSize: 16, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).hintColor),
                 ),
               ],
             ),
@@ -266,8 +272,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Recent Activity
         Text(
-          'Recent Activity',
-          style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+          l10n.recentActivity,
+          style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: 16),
         StreamBuilder<QuerySnapshot>(
@@ -281,9 +287,9 @@ class _HomeScreenState extends State<HomeScreen> {
               return Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFEEEEEE)),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: Center(
                   child: Text(
@@ -298,9 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
             return Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFEEEEEE)),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: Column(
                 children: docs.asMap().entries.map((entry) {
@@ -341,9 +347,9 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 40, offset: const Offset(0, 20)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 40, offset: const Offset(0, 20)),
             ],
           ),
           child: Column(
@@ -359,46 +365,75 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                    BoxShadow(color: const Color(0xFF0055FF).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
                   ],
                 ),
                 child: const Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 32),
               Text(
-                'Start New Project',
+                l10n.startNewEstimate,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black),
+                style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 12),
               Text(
-                'Snap a photo or upload an image to generate an instant,\nAI-powered project estimate.',
+                l10n.uploadInstruction,
                 style: GoogleFonts.inter(fontSize: 18, color: const Color(0xFF64748B), height: 1.5),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildLargeActionButton(
-                    onPressed: () => _pickImage(ImageSource.camera),
-                    icon: Icons.camera_alt_rounded,
-                    label: 'Take Photo',
-                    color: const Color(0xFF0055FF),
-                  ),
-                  const SizedBox(width: 20),
-                  _buildLargeActionButton(
-                    onPressed: () => _pickImage(ImageSource.gallery),
-                    icon: Icons.photo_library_rounded,
-                    label: 'From Gallery',
-                    color: const Color(0xFF10B981),
-                  ),
-                ],
-              ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 600) {
+                      return Column(
+                         children: [
+                            SizedBox(width: double.infinity, child: _buildLargeActionButton(
+                              onPressed: () => _pickImage(ImageSource.camera),
+                              icon: Icons.camera_alt_rounded,
+                              label: l10n.camera,
+                              color: const Color(0xFF0055FF),
+                            )),
+                            const SizedBox(height: 16),
+                            SizedBox(width: double.infinity, child: _buildLargeActionButton(
+                              onPressed: () => _pickImage(ImageSource.gallery),
+                              icon: Icons.photo_library_rounded,
+                              label: l10n.gallery,
+                              color: const Color(0xFF10B981),
+                            )),
+                         ],
+                      );
+                    }
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildLargeActionButton(
+                          onPressed: () => _pickImage(ImageSource.camera),
+                          icon: Icons.camera_alt_rounded,
+                          label: l10n.camera,
+                          color: const Color(0xFF0055FF),
+                        ),
+                        const SizedBox(width: 20),
+                        _buildLargeActionButton(
+                          onPressed: () => _pickImage(ImageSource.gallery),
+                          icon: Icons.photo_library_rounded,
+                          label: l10n.gallery,
+                          color: const Color(0xFF10B981),
+                        ),
+                      ],
+                    );
+                  }
+                ),
             ],
           ),
         ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
         
+        const SizedBox(height: 48),
+        _buildPropertyHealthCard(),
+        const SizedBox(height: 48),
+        _buildSmartTipsFeed(),
+        const SizedBox(height: 48),
+        _buildCommunitySection(),
         const SizedBox(height: 48),
         _buildBenefitGrid().animate().fadeIn(delay: 300.ms),
       ],
@@ -406,20 +441,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickStats() {
-    return Row(
-      children: [
-        _statCard('Active Estimates', '12', Icons.description_outlined, const Color(0xFF0055FF)),
-        const SizedBox(width: 20),
-        _statCard('Total Savings', '\$1.4k', Icons.eco_outlined, const Color(0xFF10B981)),
-        const SizedBox(width: 20),
-        _statCard('Pro Connections', '48', Icons.group_outlined, const Color(0xFF6366F1)),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+         if (constraints.maxWidth < 600) {
+            return Column(
+               children: [
+                  _statCard('Active Estimates', '12', Icons.description_outlined, const Color(0xFF0055FF), fullWidth: true),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                       Expanded(child: _statCard('Total Savings', '\$1.4k', Icons.eco_outlined, const Color(0xFF10B981))),
+                       const SizedBox(width: 12),
+                       Expanded(child: _statCard('Pro Connections', '48', Icons.group_outlined, const Color(0xFF6366F1))),
+                    ],
+                  ),
+               ],
+            );
+         }
+         return Row(
+           children: [
+             Expanded(child: _statCard('Active Estimates', '12', Icons.description_outlined, const Color(0xFF0055FF))),
+             const SizedBox(width: 20),
+             Expanded(child: _statCard('Total Savings', '\$1.4k', Icons.eco_outlined, const Color(0xFF10B981))),
+             const SizedBox(width: 20),
+             Expanded(child: _statCard('Pro Connections', '48', Icons.group_outlined, const Color(0xFF6366F1))),
+           ],
+         );
+      }
     );
   }
 
-  Widget _statCard(String title, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Container(
+  Widget _statCard(String title, String value, IconData icon, Color color, {bool fullWidth = false}) {
+    return Container(
+        width: fullWidth ? double.infinity : null,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -431,16 +485,15 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 20),
-            Text(value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black)),
-            Text(title, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+            Text(value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+            Text(title, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildLargeActionButton({required VoidCallback onPressed, required IconData icon, required String label, required Color color}) {
@@ -460,20 +513,38 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBenefitGrid() {
-    return Row(
-      children: [
-        _benefitItem(Icons.bolt_rounded, 'Instant Analysis', 'Powered by TruthShield'),
-        const SizedBox(width: 20),
-        _benefitItem(Icons.verified_rounded, 'Verified Pros', 'Top-rated contractors'),
-        const SizedBox(width: 20),
-        _benefitItem(Icons.security_rounded, 'Secure Pay', 'Escrow protection'),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+         if (constraints.maxWidth < 600) {
+            return Column(
+               children: [
+                  _benefitItem(Icons.bolt_rounded, 'Instant Analysis', 'Powered by TruthShield', isExpanded: false),
+                  const SizedBox(height: 12),
+                  Row(
+                     children: [
+                       Expanded(child: _benefitItem(Icons.verified_rounded, 'Verified Pros', 'Top-rated contractors', isExpanded: false)),
+                       const SizedBox(width: 12),
+                       Expanded(child: _benefitItem(Icons.security_rounded, 'Secure Pay', 'Escrow protection', isExpanded: false)),
+                     ],
+                  ),
+               ],
+            );
+         }
+         return Row(
+           children: [
+             _benefitItem(Icons.bolt_rounded, 'Instant Analysis', 'Powered by TruthShield'),
+             const SizedBox(width: 20),
+             _benefitItem(Icons.verified_rounded, 'Verified Pros', 'Top-rated contractors'),
+             const SizedBox(width: 20),
+             _benefitItem(Icons.security_rounded, 'Secure Pay', 'Escrow protection'),
+           ],
+         );
+      }
     );
   }
 
-  Widget _benefitItem(IconData icon, String title, String sub) {
-    return Expanded(
-      child: Container(
+  Widget _benefitItem(IconData icon, String title, String sub, {bool isExpanded = true}) {
+    final child = Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
@@ -488,8 +559,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(sub, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).hintColor)),
           ],
         ),
-      ),
-    );
+      );
+      
+      return isExpanded ? Expanded(child: child) : SizedBox(width: double.infinity, child: child);
   }
 
   Widget _buildActivityItem(String title, String subtitle, String time, IconData icon, Color color) {
@@ -497,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
           child: Icon(icon, color: color, size: 20),
         ),
         const SizedBox(width: 16),
@@ -505,8 +577,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.black)),
-              Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+              Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
             ],
           ),
         ),
@@ -612,9 +684,9 @@ class _HomeScreenState extends State<HomeScreen> {
       key: const ValueKey('result'),
       children: [
         Container(
-          padding: const EdgeInsets.all(40),
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 40 : 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(40),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 15)),
@@ -701,6 +773,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: TextButton.icon(
                   onPressed: () {
                     final shareUrl = 'https://rap-us.web.app/estimate/${DateTime.now().millisecondsSinceEpoch}';
+                    // ignore: deprecated_member_use
                     Share.share('Check out my project estimate from RAP: $shareUrl');
                   },
                   icon: const Icon(Icons.share_rounded),
@@ -717,7 +790,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCostHero(Map<String, dynamic> data) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 32 : 16),
       decoration: BoxDecoration(
         color: AppTheme.primary,
         borderRadius: BorderRadius.circular(32),
@@ -745,7 +818,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
+    ).animate().fade(duration: 600.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad);
   }
 
   Widget _costHeroItem(String label, String value) {
@@ -850,7 +923,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
+    ).animate().fade(duration: 600.ms, delay: 300.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOutQuad);
   }
 
   Widget _buildDetailSection(String title, Map<String, dynamic> data) {
@@ -862,9 +935,13 @@ class _HomeScreenState extends State<HomeScreen> {
              children: options.map<Widget>((opt) {
                final tier = opt['tier'] ?? 'Standard';
                Color tierColor;
-               if (tier == 'Best') tierColor = const Color(0xFFD4AF37); // Gold
-               else if (tier == 'Better') tierColor = const Color(0xFFC0C0C0); // Silver
-               else tierColor = const Color(0xFFCD7F32); // Bronze/Good
+                if (tier == 'Best') {
+                  tierColor = const Color(0xFFD4AF37); // Gold
+                } else if (tier == 'Better') {
+                  tierColor = const Color(0xFFC0C0C0); // Silver
+                } else {
+                  tierColor = const Color(0xFFCD7F32); // Bronze/Good
+                }
 
                return Container(
                  margin: const EdgeInsets.only(bottom: 16),
@@ -872,14 +949,14 @@ class _HomeScreenState extends State<HomeScreen> {
                  decoration: BoxDecoration(
                    color: Colors.white,
                    borderRadius: BorderRadius.circular(16),
-                   border: Border.all(color: tierColor.withOpacity(0.3), width: 1),
-                   boxShadow: [BoxShadow(color: tierColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                   border: Border.all(color: tierColor.withValues(alpha: 0.3), width: 1),
+                   boxShadow: [BoxShadow(color: tierColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
                  ),
                  child: Row(
                    children: [
                      Container(
                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                       decoration: BoxDecoration(color: tierColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                       decoration: BoxDecoration(color: tierColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                        child: Text(tier, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: tierColor)),
                      ),
                      const SizedBox(width: 16),
@@ -906,9 +983,9 @@ class _HomeScreenState extends State<HomeScreen> {
             content = Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                borderRadius: BorderRadius.circular(16),
-              ),
+            border: Border.all(color: Theme.of(context).dividerColor),
+            borderRadius: BorderRadius.circular(16),
+          ),
               child: DataTable(
                 headingRowColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
                 columns: [
@@ -917,8 +994,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
                 rows: materials.map<DataRow>((m) => DataRow(
                   cells: [
-                    DataCell(Text(m['name'], style: GoogleFonts.inter(color: const Color(0xFF1E293B)))),
-                    DataCell(Text('\$${m['estimated_cost_usd']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)))),
+                    DataCell(Text(m['name'], style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface))),
+                DataCell(Text('\$${m['estimated_cost_usd']}', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface))),
                   ],
                 )).toList(),
               ),
@@ -948,8 +1025,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRiskBadge(String level) {
     Color color = AppTheme.success;
-    if (level.toLowerCase() == 'medium') color = AppTheme.warning;
-    if (level.toLowerCase() == 'high') color = AppTheme.error;
+    if (level.toLowerCase() == 'medium') {
+      color = AppTheme.warning;
+    }
+    if (level.toLowerCase() == 'high') {
+      color = AppTheme.error;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -973,8 +1054,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildConfidenceBadge(String level) {
     Color color = AppTheme.success;
-    if (level.toLowerCase() == 'medium') color = AppTheme.warning;
-    if (level.toLowerCase() == 'low') color = AppTheme.error;
+    if (level.toLowerCase() == 'medium') {
+      color = AppTheme.warning;
+    }
+    if (level.toLowerCase() == 'low') {
+      color = AppTheme.error;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -993,6 +1078,156 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  Widget _buildPropertyHealthCard() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 100,
+                height: 100,
+                child: CircularProgressIndicator(
+                  value: 0.85,
+                  strokeWidth: 10,
+                  backgroundColor: AppTheme.success.withValues(alpha: 0.1),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.success),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Text('85%', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.success)),
+            ],
+          ),
+          const SizedBox(width: 32),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Property Health Index', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('Your home is in "Great" condition. 2 minor issues detected.', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('View Details', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                      const Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.primary),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmartTipsFeed() {
+    final tips = [
+      {'title': 'Save 15% on HVAC', 'desc': 'Check your filters before summer hits.', 'icon': Icons.ac_unit_rounded, 'color': Colors.blue},
+      {'title': 'Eco Lighting', 'desc': 'Switching to LED can save \$120/year.', 'icon': Icons.lightbulb_outline_rounded, 'color': Colors.amber},
+      {'title': 'Roof Health', 'desc': 'Schedule a scan after the recent storm.', 'icon': Icons.roofing_rounded, 'color': Colors.orange},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('SMART MAINTENANCE TIPS', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800, color: Theme.of(context).hintColor, letterSpacing: 1.5)),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 140,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: tips.length,
+            itemBuilder: (context, index) {
+              final tip = tips[index];
+              return Container(
+                width: 240,
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: (tip['color'] as Color).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: (tip['color'] as Color).withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(tip['icon'] as IconData, color: tip['color'] as Color, size: 24),
+                    const SizedBox(height: 12),
+                    Text(tip['title'] as String, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: tip['color'] as Color)),
+                    const SizedBox(height: 4),
+                    Text(tip['desc'] as String, style: GoogleFonts.inter(fontSize: 11, color: Theme.of(context).hintColor), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommunitySection() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(color: Color(0xFFEDE9FE), shape: BoxShape.circle),
+                child: const Icon(Icons.groups_rounded, color: Color(0xFF7C3AED)),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Community Impact', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text('You & 120 neighbors saved \$4.2k this month.', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _impactStat('Neighbors Helped', '12'),
+              _impactStat('Sustainability Score', 'A+'),
+              _impactStat('Energy Saved', '140 kWh'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _impactStat(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF7C3AED))),
+        Text(label, style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).hintColor, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

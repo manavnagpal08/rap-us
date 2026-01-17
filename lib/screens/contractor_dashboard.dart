@@ -8,6 +8,10 @@ import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:rap_app/screens/chat_screen.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:rap_app/services/ai_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:rap_app/screens/verification_center_screen.dart';
 
 class ContractorDashboard extends StatefulWidget {
   const ContractorDashboard({super.key});
@@ -19,6 +23,24 @@ class ContractorDashboard extends StatefulWidget {
 class _ContractorDashboardState extends State<ContractorDashboard> {
   final AuthService _auth = AuthService();
   final DatabaseService _db = DatabaseService();
+  final AiService _ai = AiService();
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _speechEnabled = false;
+  bool _isListening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  void _initSpeech() async {
+    _speechEnabled = await _speech.initialize(
+      onError: (e) => debugPrint('Speech error: $e'),
+      onStatus: (status) => debugPrint('Speech status: $status'),
+    );
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,91 +49,37 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 40 : 20),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1000),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildStatsSection(context),
-                    const SizedBox(height: 32),
-                    _buildVerificationBanner(context),
-                    const SizedBox(height: 40),
-                    _buildSectionTitle(context, l10n.activeProjects),
-                    _buildProjectList(context),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 40 : 20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      l10n.proDashboard,
-                      style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
-                    ),
-                    const SizedBox(width: 8),
-                    FutureBuilder<Map<String, dynamic>?>(
-                      future: _db.getUserProfile(_auth.currentUser!.uid),
-                      builder: (context, profileSnapshot) {
-                        return FutureBuilder<List<Map<String, dynamic>>>(
-                          future: _db.getContractors().first,
-                          builder: (context, contractorsSnapshot) {
-                            final contractor = contractorsSnapshot.data?.firstWhere((c) => (c['id'] ?? '') == _auth.currentUser!.uid, orElse: () => {});
-                            if (contractor?['isVerified'] == true) {
-                              return const Icon(Icons.verified_rounded, color: AppTheme.success, size: 20);
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        );
-                      }
-                    ),
-                  ],
-                ),
-                Text(l10n.manageAccount, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                _buildStatsSection(context),
+                const SizedBox(height: 32),
+                _buildActionGrid(context),
+                const SizedBox(height: 40),
+                _buildVerificationBanner(context),
+                const SizedBox(height: 40),
+                _buildSectionTitle(context, l10n.activeProjects),
+                _buildProjectList(context),
+                const SizedBox(height: 48),
+                _buildActivityFeed(context),
+                const SizedBox(height: 48),
+                _buildMarketingSection(context),
+                const SizedBox(height: 40),
               ],
             ),
-            if (kDebugMode)
-              ElevatedButton.icon(
-                onPressed: _createTestJob,
-                icon: const Icon(Icons.bug_report_rounded, size: 18, color: Colors.white),
-                label: Text(l10n.addTestJob, style: const TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  // Remove _buildHeader as it's now handled by MainScreen contextually.
+
 
   Future<void> _createTestJob() async {
     try {
@@ -253,6 +221,48 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                       ],
                     ),
                   ),
+                  
+                  // Pro Mode: Voice Log
+                  if (job['status'] == 'in_progress')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [AppTheme.primary.withValues(alpha: 0.1), Colors.white], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(Icons.mic_none_rounded, color: AppTheme.primary),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Pro Mode: Hands-Free Log', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                                Text('Tap & say "Finished framing..."', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                              ],
+                            ),
+                          ),
+                          IconButton.filled(
+                            onPressed: () {
+                               Navigator.pop(ctx);
+                               _startVoiceLogSession(job);
+                            }, 
+                            icon: const Icon(Icons.mic),
+                            style: IconButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
             ],
           ),
         ),
@@ -391,8 +401,10 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                   ],
                 ),
               ),
-              ElevatedButton(
-                onPressed: () => _showVerificationDialog(context),
+                ElevatedButton(
+                onPressed: () {
+                   Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationCenterScreen()));
+                },
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.warning, foregroundColor: Colors.white),
                 child: Text(l10n.verifyNow),
               ),
@@ -432,7 +444,9 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
             onPressed: () async {
               if (noteController.text.trim().isEmpty) return;
               await _db.addProgressLog(job['id'], noteController.text.trim());
+              if (!ctx.mounted) return;
               if (ctx.mounted) Navigator.pop(ctx);
+              if (!mounted) return;
               if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Progress log posted!')));
             },
             child: const Text('Post Update'),
@@ -588,7 +602,8 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
            ));
         }
         
-        final jobs = snapshot.data ?? [];
+        final allJobs = snapshot.data ?? [];
+        final jobs = allJobs.where((j) => j['status'] == 'in_progress').toList();
         final l10n = AppLocalizations.of(context)!;
         if (jobs.isEmpty) {
           return Center(
@@ -664,6 +679,332 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
           },
         );
       }
+    );
+  }
+  void _startVoiceLogSession(Map<String, dynamic> job) {
+    String recognizedText = '';
+    final l10n = AppLocalizations.of(context)!;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          // Auto-start listening when sheet opens
+          if (!_isListening && _speechEnabled) {
+            _speech.listen(
+              onResult: (result) {
+                setSheetState(() {
+                  recognizedText = result.recognizedWords;
+                });
+              },
+            ).then((_) {
+               setSheetState(() => _isListening = true);
+            });
+          }
+
+          return Container(
+            height: 400,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    color: _isListening ? AppTheme.error.withValues(alpha: 0.1) : AppTheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isListening ? Icons.graphic_eq_rounded : Icons.mic_none_rounded,
+                    color: _isListening ? AppTheme.error : AppTheme.primary,
+                    size: 40,
+                  ).animate(target: _isListening ? 1 : 0).shake(hz: 2),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  _isListening ? 'Listening...' : 'Processing...',
+                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Text(
+                        recognizedText.isEmpty ? 'Speak now...' : recognizedText,
+                        style: GoogleFonts.inter(
+                          fontSize: 18, 
+                          color: recognizedText.isEmpty ? Colors.grey : Colors.black87
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          _speech.stop();
+                          setSheetState(() => _isListening = false);
+                          Navigator.pop(ctx);
+                        },
+                        child: Text(l10n.cancel),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: recognizedText.isEmpty ? null : () async {
+                          _speech.stop();
+                          setSheetState(() => _isListening = false);
+                          
+                          // Process with AI
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI is formatting your log...')));
+                          Navigator.pop(ctx);
+                          
+                          try {
+                            final processed = await _ai.parseVoiceLog(recognizedText);
+                            final note = processed['log_note'];
+                            final time = processed['time_spent']; 
+                            
+                            final finalLog = time != null ? "$note (Time: $time)" : note;
+                            
+                            await _db.addProgressLog(job['id'], finalLog);
+                            if (mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Log Posted Successfully!'), backgroundColor: AppTheme.success));
+                            }
+                          } catch (e) {
+                             if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Post Update'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    ).whenComplete(() {
+      _speech.stop();
+      setState(() => _isListening = false);
+    });
+  }
+
+  Widget _buildActionGrid(BuildContext context) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        _actionCard(
+          context,
+          'Find Leads',
+          Icons.search_rounded,
+          const Color(0xFF6366F1),
+          () => Navigator.pushNamed(context, '/contractor_leads'),
+        ),
+        _actionCard(
+          context,
+          'Earnings',
+          Icons.account_balance_wallet_outlined,
+          const Color(0xFF10B981),
+          () => Navigator.pushNamed(context, '/contractor_earnings'),
+        ),
+        _actionCard(
+          context,
+          'Project History',
+          Icons.history_rounded,
+          const Color(0xFFF59E0B),
+          () => Navigator.pushNamed(context, '/contractor_history'),
+        ),
+        _actionCard(
+          context,
+          'Marketplace',
+          Icons.storefront_outlined,
+          const Color(0xFFEC4899),
+          () => Navigator.pushNamed(context, '/marketplace'),
+        ),
+      ],
+    );
+  }
+
+  Widget _actionCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: (MediaQuery.of(context).size.width - 60) / 2 > 200 ? 180 : (MediaQuery.of(context).size.width - 64) / 2,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 12),
+            Text(title, textAlign: TextAlign.center, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityFeed(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(context, 'RECENT ACTIVITY FEED'),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+          ),
+          child: Column(
+            children: [
+              _activityItem(context, 'New Quote Sent', 'Kitchen Remodel (Smith)', '2h ago', Icons.send_rounded, const Color(0xFF6366F1)),
+              const Divider(height: 32),
+              _activityItem(context, 'Payment Received', '\$1,200 deposited', '5h ago', Icons.check_circle_rounded, const Color(0xFF10B981)),
+              const Divider(height: 32),
+              _activityItem(context, 'New Message', 'John Smith sent a photo', '1d ago', Icons.chat_bubble_rounded, const Color(0xFFF59E0B)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _activityItem(BuildContext context, String title, String sub, String time, IconData icon, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(sub, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
+            ],
+          ),
+        ),
+        Text(time, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+      ],
+    );
+  }
+
+  Widget _buildMarketingSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 30, offset: const Offset(0, 15)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.stars_rounded, color: Colors.white, size: 40),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Marketing & Growth', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text('Grow your business with RAP Rewards', style: GoogleFonts.inter(color: Colors.white70)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: _rewardPointItem('Loyalty Points', '2,450', Icons.auto_awesome_rounded),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: _rewardPointItem('Referrals', '12', Icons.people_alt_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Your Referral Code', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold)),
+                      Text('PRO-RAP-9921', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Theme.of(context).colorScheme.primary, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
+                  child: const Text('Share'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _rewardPointItem(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 24),
+          const SizedBox(height: 8),
+          Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(label, style: GoogleFonts.inter(fontSize: 11, color: Colors.white70)),
+        ],
+      ),
     );
   }
 }

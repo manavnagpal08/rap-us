@@ -49,6 +49,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roiInsight => 'ROI Insight';
 
   @override
+  String get emergencySos => 'EMERGENCY SOS';
+
+  @override
+  String get broadcastUrgent => 'Broadcast Urgent';
+
+  @override
+  String get findingPros => 'Finding pros near you...';
+
+  @override
+  String get proAccepted => 'Pro Accepted!';
+
+  @override
+  String get milesAway => 'miles away';
+
+  @override
   String get settings => 'Settings';
 
   @override
@@ -365,4 +380,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resetLinkSent => 'Reset link sent to';
+
+  @override
+  String get estimates => 'Estimates';
+
+  @override
+  String get recentActivity => 'Recent Activity';
+
+  @override
+  String get welcomeBack => 'Welcome back';
+
+  @override
+  String get rapBot => 'RAP Assistant';
+
+  @override
+  String get jobBoard => 'Job Board';
+
+  @override
+  String get submitBid => 'Submit Bid';
+
+  @override
+  String get bidAmount => 'Bid Amount (\$)';
+
+  @override
+  String get bidSuccess => 'Bid submitted successfully!';
 }

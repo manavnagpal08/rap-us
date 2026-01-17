@@ -21,7 +21,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
   final SecurityService _security = SecurityService();
   bool _biometricsEnabled = false;
   bool _twoFactorEnabled = false;
-  String? _pendingSecret;
+
 
   @override
   void initState() {
@@ -41,6 +41,29 @@ class _SecurityScreenState extends State<SecurityScreen> {
           });
         }
       }
+    }
+  }
+
+  Future<void> _toggleBiometrics(bool val) async {
+    if (val) {
+      final authenticated = await _security.authenticateBiometrics();
+      if (authenticated) {
+        setState(() => _biometricsEnabled = true);
+        await _db.updateUserProfile(_auth.currentUser!.uid, {'biometricsEnabled': true});
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biometrics enabled!'), backgroundColor: AppTheme.success));
+        }
+      } else {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Authentication failed. Biometrics not enabled.'), backgroundColor: AppTheme.error));
+        }
+      }
+    } else {
+      setState(() => _biometricsEnabled = false);
+      await _db.updateUserProfile(_auth.currentUser!.uid, {'biometricsEnabled': false});
+       if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biometrics disabled.'), backgroundColor: Colors.grey));
+        }
     }
   }
 
@@ -78,20 +101,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
               icon: Icons.fingerprint_rounded,
               title: l10n.biometrics,
               subtitle: l10n.biometricsSubtitle,
+              onTap: () => _toggleBiometrics(!_biometricsEnabled),
               trailing: Switch.adaptive(
                 value: _biometricsEnabled,
-                onChanged: (val) async {
-                  if (val) {
-                    final authenticated = await _security.authenticateBiometrics();
-                    if (authenticated) {
-                      setState(() => _biometricsEnabled = true);
-                      await _db.updateUserProfile(_auth.currentUser!.uid, {'biometricsEnabled': true});
-                    }
-                  } else {
-                    setState(() => _biometricsEnabled = false);
-                    await _db.updateUserProfile(_auth.currentUser!.uid, {'biometricsEnabled': false});
-                  }
-                },
+                onChanged: _toggleBiometrics,
                 activeColor: AppTheme.accent,
               ),
             ),
@@ -197,7 +210,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
             const SizedBox(height: 24),
             Text(title, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 12),
-            Text(explanation, style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), height: 1.5)),
+            Text(explanation, style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), height: 1.5)),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -295,6 +308,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     'totpSecret': secret,
                   });
                   setState(() => _twoFactorEnabled = true);
+                  if (!context.mounted) return;
                   if (mounted) Navigator.pop(context);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -113,5 +113,13 @@
   "twoFactorDisableExplanation": "2FA अक्षम करने से अतिरिक्त सत्यापन चरण हट जाता है। इससे लॉग इन करना तेज़ तो हो जाता है लेकिन कम सुरक्षित हो जाता है।",
   "setup2FA": "2FA सेटअप करें",
   "turnOff": "बंद करें",
-  "resetLinkSent": "रीसेट लिंक यहाँ भेजा गया:"
+  "resetLinkSent": "रीसेट लिंक यहाँ भेजा गया:",
+  "estimates": "अनुमान",
+  "recentActivity": "हाल की गतिविधि",
+  "welcomeBack": "वापसी पर स्वागत है",
+  "rapBot": "RAP सहायक",
+  "jobBoard": "जॉब बोर्ड",
+  "submitBid": "बोली लगाएं",
+  "bidAmount": "बोली राशि ($)",
+  "bidSuccess": "बोली सफलतापूर्वक सबमिट की गई!"
 }

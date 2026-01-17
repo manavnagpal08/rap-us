@@ -45,6 +45,8 @@ class _LoginScreenState extends State<LoginScreen> {
         await _storage.write(key: 'password', value: password);
         
         final profile = await _db.getUserProfile(credential.user!.uid);
+        if (!mounted) return;
+
         if (profile != null && profile['is2FAEnabled'] == true) {
           _showOtpDialog(profile['totpSecret']);
         } else {

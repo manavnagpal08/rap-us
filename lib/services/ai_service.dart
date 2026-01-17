@@ -79,7 +79,7 @@ class AiService {
       if (key.isEmpty) key = _defaultGeminiKey;
 
       final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         apiKey: key,
       );
       
@@ -262,7 +262,107 @@ JSON SCHEMA:
     if (query.contains('hello') || query.contains('hi')) {
       return "Hello! I'm the RAP Help Assistant. I can help you with app usage, estimates, marketplace, or security questions. How can I assist you today?";
     }
+    if (query.contains('part') || query.contains('lens') || query.contains('identify')) {
+        return "RAP Lens allows you to identify specific parts (like hinges, screws, fittings) just by scanning them. It analyzes the image to find the exact part name, model, and the best place to buy it online.";
+    }
     
     return "I'm the RAP Help Assistant. I can help with information about estimates, contractors, security, and app features. For specific technical issues, please contact support@rap.com.";
+  }
+
+  // RAP Lens: Part Identification Logic
+  Future<Map<String, dynamic>> identifyPart(String imageBase64) async {
+    final settings = await _getSettings();
+    String key = (settings['gemini_key'] ?? '').toString();
+    if (key.isEmpty) key = _defaultGeminiKey;
+
+    final model = GenerativeModel(
+      model: 'gemini-flash-latest',
+      apiKey: key,
+      generationConfig: GenerationConfig(responseMimeType: 'application/json'),
+    );
+
+    const prompt = """
+    Analyze this image to identify the SPECIFIC technical part/item shown (e.g., 'Blum Soft-Close 110 Degree Hinge', 'Brass Compression Fitting 1/2 inch').
+    Return VALID JSON ONLY.
+    
+    Output Format:
+    {
+      "part_name": "Precise name and model if visible",
+      "category": "e.g. Plumbing, Hardware, Electrical",
+      "description": "Brief technical description",
+      "estimated_price": "e.g. \$15.99",
+      "buy_links": [
+        {"store": "Amazon", "url": "https://www.amazon.com/s?k=SEARCH_TERM_HERE"},
+        {"store": "Home Depot", "url": "https://www.homedepot.com/s/SEARCH_TERM_HERE"}
+      ],
+      "compatibility_notes": "e.g. 'Requires 35mm bore hole'"
+    }
+    
+    Replace SEARCH_TERM_HERE with the exact search query for this part.
+    """;
+
+    final pureBase64 = imageBase64.contains(',') ? imageBase64.split(',').last : imageBase64;
+    final bytes = base64Decode(pureBase64);
+    
+    try {
+      final response = await model.generateContent([
+        Content.multi([
+          TextPart(prompt),
+          DataPart('image/jpeg', bytes),
+        ])
+      ]);
+      
+      String text = response.text ?? '{}';
+      if (text.contains('```json')) {
+        text = text.split('```json').last.split('```').first;
+      } else if (text.contains('```')) {
+        text = text.split('```').last.split('```').first;
+      }
+      
+      return jsonDecode(text.trim());
+    } catch (e) {
+      throw 'RAP Lens Failed: $e';
+    }
+  }
+
+  // Voice Log Processing for "Pro Mode"
+  Future<Map<String, dynamic>> parseVoiceLog(String transcript) async {
+    final settings = await _getSettings();
+    String key = (settings['gemini_key'] ?? '').toString();
+    if (key.isEmpty) key = _defaultGeminiKey;
+
+    final model = GenerativeModel(
+      model: 'gemini-flash-latest',
+      apiKey: key,
+      generationConfig: GenerationConfig(responseMimeType: 'application/json'),
+    );
+
+    final prompt = """
+    You are an AI assistant for a construction app. Convert this raw voice transcript from a contractor into a professional, structured progress log.
+    
+    Transcript: "$transcript"
+    
+    Output JSON:
+    {
+      "log_note": "Clear, professional summary of the work done (e.g. 'Completed framing of master bedroom').",
+      "time_spent": "Extracted duration if mentioned (e.g. '4 hours'), otherwise null.",
+      "sentiment": "positive | neutral | negative (based on tone hints)"
+    }
+    """;
+
+    try {
+      final response = await model.generateContent([Content.text(prompt)]);
+      String text = response.text ?? '{}';
+      if (text.contains('```json')) {
+        text = text.split('```json').last.split('```').first;
+      }
+      return jsonDecode(text.trim());
+    } catch (e) {
+      return {
+        "log_note": transcript, // Fallback to raw text
+        "time_spent": null,
+        "sentiment": "neutral"
+      };
+    }
   }
 }

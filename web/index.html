@@ -19,18 +19,19 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description"
+    content="RAP US - The Ultimate Repair & Assembly Platform. AI-powered cost estimation and verified contractor marketplace.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="rap_app">
+  <meta name="apple-mobile-web-app-title" content="RAP US">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>rap_app</title>
+  <title>RAP US | Repair & Assembly Platform</title>
   <link rel="manifest" href="manifest.json">
 </head>
 
@@ -41,14 +42,14 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #ffffff;
+      background: radial-gradient(circle at center, #ffffff 0%, #f8faff 100%);
       flex-direction: column;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .logo {
-      width: 100px;
-      height: 100px;
-      margin-bottom: 20px;
+      width: 120px;
+      height: 120px;
       animation: pulse 2s infinite ease-in-out;
     }
 
@@ -68,30 +69,10 @@
         opacity: 1;
       }
     }
-
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #0055FF;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
   </style>
 
   <div class="loading-container" id="loading">
-    <img src="assets/assets/images/logo.png" class="logo" alt="RAP Logo" onerror="this.style.display='none'">
-    <div class="spinner"></div>
+    <img src="icons/Icon-512.png" class="logo" alt="RAP Logo" onerror="this.src='favicon.png'">
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
