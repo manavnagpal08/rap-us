@@ -303,7 +303,14 @@ class _MainScreenState extends State<MainScreen> {
                       heroTag: 'gpt',
                       backgroundColor: Colors.black,
                       child: const Icon(Icons.psychology_alt, color: Color(0xFF00FF9D)),
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RapGptScreen())),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const RapGptSheet(),
+                        );
+                      },
                     ).animate().scale(delay: 200.ms),
                   ),
 
