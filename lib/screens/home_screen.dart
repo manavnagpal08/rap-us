@@ -812,10 +812,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStormWatchCard() {
     // Mock location for demo - in prod use Geolocator
-    const city = "Chicago, IL"; 
     
     return FutureBuilder<Map<String, dynamic>>(
-      future: WeatherService().checkLocalWeather(city),
+      future: WeatherService().checkLocalWeather(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
         

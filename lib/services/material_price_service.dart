@@ -1,19 +1,45 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 class MaterialPriceService {
-  // Mock Database of tracked items
-  final List<Map<String, dynamic>> _watchlist = [
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Future<List<Map<String, dynamic>>> getWatchlist() async {
+    try {
+      final snapshot = await _db.collection('market_prices').get();
+      if (snapshot.docs.isEmpty) {
+        // Seed default data if empty (First run)
+        await _seedDefaultPrices();
+        return _defaultPrices;
+      }
+      
+      return snapshot.docs.map((doc) => {
+        ...doc.data(),
+        'id': doc.id,
+      }).toList();
+    } catch (e) {
+      debugPrint("Price Service Error: $e");
+      return _defaultPrices; // Fallback to local default if offline/error
+    }
+  }
+
+  Future<void> _seedDefaultPrices() async {
+    for (var item in _defaultPrices) {
+       await _db.collection('market_prices').add(item);
+    }
+  }
+
+  // Fallback / Initial Data
+  final List<Map<String, dynamic>> _defaultPrices = [
     {
-      'id': '1',
       'name': 'Pressure Treated Lumber (2x4)',
       'current_price': 8.50,
       'original_price': 10.00,
-      'trend': 'down', // up, down, stable
+      'trend': 'down', 
       'percent_change': -15.0,
       'alert_threshold': -10.0,
     },
     {
-      'id': '2',
       'name': 'Copper Pipe (Type L, 10ft)',
       'current_price': 25.00,
       'original_price': 22.00,
@@ -22,7 +48,6 @@ class MaterialPriceService {
       'alert_threshold': -5.0,
     },
     {
-      'id': '3',
       'name': 'Drywall Sheet (4x8)',
       'current_price': 14.00,
       'original_price': 14.50,
@@ -32,13 +57,8 @@ class MaterialPriceService {
     }
   ];
 
-  Future<List<Map<String, dynamic>>> getWatchlist() async {
-    await Future.delayed(const Duration(milliseconds: 800)); // Sim network
-    return _watchlist;
-  }
-
   Future<void> addToWatchlist(String itemName) async {
-    // Mock add
-    debugPrint("Added $itemName to watchlist");
+     // Implementation for user-specific watchlist would go here
+     debugPrint("User tracked: $itemName");
   }
 }

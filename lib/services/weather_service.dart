@@ -1,47 +1,102 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
-import 'package:rap_app/services/notification_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class WeatherService {
-  // Mocking the API response for demo purposes to guarantee the specific alert scenario
-  // Real implementation would use: https://api.openweathermap.org/data/2.5/weather?q=$city&appid=KEY
+  // Real implementation using Open-Meteo (No API Key Required)
   
-  Future<Map<String, dynamic>> checkLocalWeather(String city) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
+  Future<Map<String, dynamic>> checkLocalWeather() async {
+    try {
+      // 1. Get Location
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return {'risk_level': 'safe', 'alert': 'Location Denied', 'temp_f': 70};
+        }
+      }
 
-    // Force the "Chicago Freeze" scenario if city matches, otherwise random
-    if (city.toLowerCase().contains('chicago')) {
+      if (permission == LocationPermission.deniedForever) {
+         return {'risk_level': 'safe', 'alert': 'Location Perm Disabled', 'temp_f': 70};
+      }
+
+      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium);
+      
+      // 2. Call API
+      // Using temperature_2m, weathercode
+      final url = Uri.parse(
+        "https://api.open-meteo.com/v1/forecast?latitude=${position.latitude}&longitude=${position.longitude}&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph"
+      );
+      
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final current = data['current_weather'];
+        final temp = current['temperature'];
+        final code = current['weathercode']; // WMO interpretation
+        
+        // 3. Analyze Risk
+        String? alert;
+        String? recommendation;
+        String riskLevel = 'safe';
+        String condition = _getWeatherDescription(code);
+
+        // FREEZE Logic
+        if (temp <= 32) {
+           riskLevel = 'medium';
+           alert = 'Freeze Warning';
+           recommendation = 'Temps are freezing. Ensure pipes are insulated.';
+           if (temp <= 10) {
+             riskLevel = 'high';
+             alert = 'Severe Freeze Alert';
+             recommendation = 'CRITICAL: Pipes may burst. Keep water dripping or add heat tape.';
+           }
+        }
+        
+        // STORM Logic (WMO Codes: 95, 96, 99 = Thunderstorm; 66, 67 = Freezing Rain)
+        if ([95, 96, 99].contains(code)) {
+          riskLevel = 'high';
+          alert = 'Thunderstorm Alert';
+          recommendation = 'High winds/lightning detected. Secure outdoor items.';
+        } else if ([66, 67, 71, 73, 75].contains(code) && temp < 32) {
+           riskLevel = 'high';
+           alert = 'Snow/Ice Alert';
+           recommendation = 'Heavy snow or ice expected. Check roof load.';
+        }
+
+        return {
+          'temp_f': temp,
+          'condition': condition,
+          'alert': alert ?? 'Clear Condition',
+          'risk_level': riskLevel,
+          'recommendation': recommendation ?? 'Weather is good. Great day for repairs!',
+        };
+      } else {
+        throw 'Weather API Error';
+      }
+    } catch (e) {
+      debugPrint("Weather Error: $e");
       return {
-        'temp_f': -5,
-        'condition': 'Blizzard',
-        'alert': 'Severe Freeze Warning',
-        'risk_level': 'high', // safe, medium, high
-        'recommendation': 'Pipe Freeze Warning! ❄️ Hire a pro to wrap pipes immediately.',
+        'temp_f': 0,
+        'condition': 'Unknown',
+        'alert': 'Service Unavailable',
+        'risk_level': 'safe',
+        'recommendation': null,
       };
     }
-
-    return {
-      'temp_f': 72,
-      'condition': 'Sunny',
-      'alert': null,
-      'risk_level': 'safe',
-      'recommendation': null,
-    };
   }
 
-  // Check and Notify
-  Future<void> runStormWatchCheck(String city) async {
-    final weather = await checkLocalWeather(city);
-    
-    if (weather['risk_level'] == 'high') {
-      // Trigger Notification
-      // Use the existing channel we created
-      // Since we don't have a direct "show"  method exposed in the snippets for NotificationService that takes args easily,
-      // We will assume basic usage or just rely on the UI card for now, 
-      // but ideally we'd call NotificationService().show(...)
-      debugPrint("STORM WATCH ALERT: ${weather['recommendation']}");
-    }
+  String _getWeatherDescription(int code) {
+    if (code == 0) return 'Clear Sky';
+    if (code == 1 || code == 2 || code == 3) return 'Partly Cloudy';
+    if (code == 45 || code == 48) return 'Fog';
+    if (code >= 51 && code <= 55) return 'Drizzle';
+    if (code >= 61 && code <= 65) return 'Rain';
+    if (code >= 71 && code <= 77) return 'Snow';
+    if (code >= 80 && code <= 82) return 'Showers';
+    if (code >= 95) return 'Thunderstorm';
+    return 'Unknown';
   }
 }
