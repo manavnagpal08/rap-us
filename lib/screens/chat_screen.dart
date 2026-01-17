@@ -27,6 +27,17 @@ class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
   String? _chatId;
   String? _currentUserId;
+  Map<String, String> _translations = {};
+
+  Future<void> _translateMessage(String id, String content) async {
+    final target = Localizations.localeOf(context).languageCode;
+    final translated = await _chatService.translateText(content, to: target);
+    if (mounted) {
+      setState(() {
+        _translations[id] = translated;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -139,6 +150,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     final isMe = msg['senderId'] == _currentUserId;
                     final time = msg['timestamp'] != null ? DateFormat('hh:mm a').format((msg['timestamp'] as Timestamp).toDate()) : '...';
                     
+                    final hasTranslation = _translations.containsKey(messages[index].id);
+                    final displayContent = hasTranslation ? _translations[messages[index].id]! : msg['content'];
+
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Padding(
@@ -146,24 +160,52 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Column(
                           crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-                              decoration: BoxDecoration(
-                                color: isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(22).copyWith(
-                                  bottomLeft: isMe ? null : Radius.zero,
-                                  bottomRight: isMe ? Radius.zero : null,
+                            GestureDetector(
+                              onLongPress: () => !isMe ? _translateMessage(messages[index].id, msg['content']) : null,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                                decoration: BoxDecoration(
+                                  color: isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(22).copyWith(
+                                    bottomLeft: isMe ? 22 : 0, 
+                                    bottomRight: isMe ? 0 : 22,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                                  ],
                                 ),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                                ],
-                              ),
-                              child: Text(
-                                msg['content'],
-                                style: GoogleFonts.inter(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, height: 1.4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayContent,
+                                      style: GoogleFonts.inter(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, height: 1.4),
+                                    ),
+                                    if (hasTranslation)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.translate, size: 10, color: isMe ? Colors.white70 : Theme.of(context).primaryColor),
+                                            const SizedBox(width: 4),
+                                            Text('Translated', style: GoogleFonts.inter(fontSize: 10, color: isMe ? Colors.white70 : Theme.of(context).primaryColor)),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
+                            if (!isMe && !hasTranslation)
+                               Padding(
+                                 padding: const EdgeInsets.only(top: 2, left: 4),
+                                 child: GestureDetector(
+                                   onTap: () => _translateMessage(messages[index].id, msg['content']),
+                                   child: Text('Translate', style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+                                 ),
+                               ),
                             const SizedBox(height: 4),
                             Text(time, style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).hintColor)),
                           ],

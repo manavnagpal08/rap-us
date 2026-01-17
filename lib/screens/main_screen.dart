@@ -21,6 +21,7 @@ import 'package:rap_app/screens/contractor_dashboard.dart';
 import 'package:rap_app/screens/contractor_leads_screen.dart';
 import 'package:rap_app/screens/contractor_earnings_screen.dart';
 import 'package:rap_app/screens/contractor_history_screen.dart';
+import 'package:rap_app/screens/rap_gpt_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -293,6 +294,17 @@ class _MainScreenState extends State<MainScreen> {
                       icon: const Icon(Icons.warning_amber_rounded).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1),
                       label: const Text('SOS', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ).animate().scale(begin: const Offset(0,0), duration: 500.ms, curve: Curves.elasticOut),
+                  ),
+
+                  Positioned(
+                    right: 24,
+                    bottom: isDesktop ? 100 : 180,
+                    child: FloatingActionButton(
+                      heroTag: 'gpt',
+                      backgroundColor: Colors.black,
+                      child: const Icon(Icons.psychology_alt, color: Color(0xFF00FF9D)),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RapGptScreen())),
+                    ).animate().scale(delay: 200.ms),
                   ),
 
                   Positioned(
@@ -632,7 +644,11 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  IconButton(
+                    icon: Icon(_isListening ? Icons.mic : Icons.mic_none, color: _isListening ? AppTheme.accent : null),
+                    onPressed: _isListening ? _stopListening : _startListening
+                  ),
+                  const SizedBox(width: 8),
                   CircleAvatar(backgroundColor: const Color(0xFF0055FF), child: IconButton(icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20), onPressed: _sendMessage)),
                 ],
               ),

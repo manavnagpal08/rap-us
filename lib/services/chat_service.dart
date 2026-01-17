@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:translator/translator.dart';
+import 'package:flutter/foundation.dart';
 
 class ChatService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -55,5 +57,18 @@ class ChatService {
     return _db.collection('chats')
       .where('participants', arrayContains: userId)
       .snapshots();
+  }
+
+  // Translation Service Integration
+  final GoogleTranslator _translator = GoogleTranslator();
+
+  Future<String> translateText(String text, {required String to}) async {
+    try {
+      final translation = await _translator.translate(text, to: to);
+      return translation.text;
+    } catch (e) {
+      debugPrint('Translation error: $e');
+      return text; // Fallback to original
+    }
   }
 }

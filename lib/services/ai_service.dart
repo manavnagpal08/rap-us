@@ -365,4 +365,54 @@ JSON SCHEMA:
       };
     }
   }
+  // RAP-GPT: Expert Construction/DIY Chatbot
+  Future<String> chatWithExpert(String message, List<Map<String, String>> history) async {
+    final settings = await _getSettings();
+    String key = (settings['gemini_key'] ?? '').toString();
+    if (key.isEmpty) key = _defaultGeminiKey;
+
+    final model = GenerativeModel(
+      model: 'gemini-flash-latest',
+      apiKey: key,
+    );
+
+    // Build chat history
+    final List<Content> chatHistory = history.map((h) {
+      if (h['role'] == 'user') {
+        return Content.text(h['text']!);
+      } else {
+        return Content.model([TextPart(h['text']!)]);
+      }
+    }).toList();
+
+    // Context & Persona
+    const systemInstruction = """
+    You are 'RAP-GPT', an expert AI construction and DIY assistant.
+    Your knowledge covers: Building codes (ICC, NEC), repair guides, material selection, and safety protocols.
+    
+    Guidelines:
+    1. Be concise, professional, and safety-first.
+    2. If a user asks about dangerous electrical/gas work, WARN them to hire a pro.
+    3. Provide step-by-step instructions for DIY tasks.
+    4. Format output with Markdown (bold for tools, lists for steps).
+    
+    Current User Question:
+    """;
+
+    // Combine system prompt with the latest message. 
+    // Gemini doesn't strictly separate system prompts in 'flash' as cleanly as Pro, 
+    // so we prepend context to the latest message or the first message.
+    // Ideally, we use the `chat` method of the model for maintaining session.
+    
+    final chat = model.startChat(
+      history: chatHistory
+    );
+
+    try {
+      final response = await chat.sendMessage(Content.text(systemInstruction + message));
+      return response.text ?? "I'm having trouble connecting to the construction database. Please try again.";
+    } catch (e) {
+      return "Error: $e";
+    }
+  }
 }

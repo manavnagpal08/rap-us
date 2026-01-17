@@ -15,6 +15,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:rap_app/screens/login_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:ui';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -264,10 +265,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-          ).animate().fadeIn().slideX(begin: -0.1),
+              ],
+            ),
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, curve: Curves.easeOut),
 
         // Quick Stats Row
-        _buildQuickStats().animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+        _buildQuickStats().animate().fadeIn(delay: 200.ms).slideX(begin: 0.2),
         const SizedBox(height: 32),
 
         // Recent Activity
@@ -355,21 +358,21 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             children: [
               Container(
-                width: 100,
-                height: 100,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0055FF), Color(0xFF00AAFF)],
+                    colors: [Color(0xFF0055FF), Color(0xFF00E5FF)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFF0055FF).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                    BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 15)),
                   ],
                 ),
-                child: const Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.white),
-              ),
+                child: const Icon(Icons.add_a_photo_outlined, size: 50, color: Colors.white),
+              ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scaleXY(end: 1.05, duration: 2000.ms, curve: Curves.easeInOut),
               const SizedBox(height: 32),
               Text(
                 l10n.startNewEstimate,
@@ -499,19 +502,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLargeActionButton({required VoidCallback onPressed, required IconData icon, required String label, required Color color}) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, color: Colors.white),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-    );
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white, size: 28),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          textStyle: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        ),
+      ),
+    ).animate().scale(duration: 200.ms, curve: Curves.easeOutBack);
   }
 
   Widget _buildBenefitGrid() {

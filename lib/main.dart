@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,6 +7,7 @@ import 'package:rap_app/firebase_options.dart';
 import 'package:rap_app/screens/splash_screen.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/theme/app_theme.dart';
+import 'package:rap_app/services/notification_service.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -15,7 +17,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await AppTheme.init();
+  try {
+    await NotificationService().init();
+  } catch (e) {
+    debugPrint('Notification init failed (expected on web/simulators without config): $e');
+  }
 
   if (kIsWeb) {
     // This often fixes "channel" errors on restricted networks or certain browsers
