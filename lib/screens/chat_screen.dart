@@ -168,8 +168,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 decoration: BoxDecoration(
                                   color: isMe ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(22).copyWith(
-                                    bottomLeft: isMe ? 22 : 0, 
-                                    bottomRight: isMe ? 0 : 22,
+                                    bottomLeft: isMe ? const Radius.circular(22) : Radius.zero, 
+                                    bottomRight: isMe ? Radius.zero : const Radius.circular(22),
                                   ),
                                   boxShadow: [
                                     BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),

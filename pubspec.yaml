@@ -68,6 +68,9 @@ dependencies:
   flutter_local_notifications: ^19.5.0
   translator: ^1.0.4+1
   flutter_tts: ^4.2.5
+  mobile_scanner: ^7.1.4
+  http: ^1.6.0
+  fl_chart: ^1.1.0
 
 dev_dependencies:
   flutter_test:

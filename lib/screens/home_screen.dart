@@ -16,6 +16,8 @@ import 'package:rap_app/screens/login_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
+import 'package:rap_app/services/weather_service.dart';
+import 'package:rap_app/screens/digital_handshake_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -265,13 +267,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-              ],
-            ),
           ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, curve: Curves.easeOut),
 
         // Quick Stats Row
         _buildQuickStats().animate().fadeIn(delay: 200.ms).slideX(begin: 0.2),
         const SizedBox(height: 32),
+
+        // NEW: Storm Watch & Tools
+        _buildStormWatchCard(),
+        const SizedBox(height: 24),
 
         // Recent Activity
         Text(
@@ -801,6 +805,75 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+
+
+  Widget _buildStormWatchCard() {
+    // Mock location for demo - in prod use Geolocator
+    const city = "Chicago, IL"; 
+    
+    return FutureBuilder<Map<String, dynamic>>(
+      future: WeatherService().checkLocalWeather(city),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        
+        final data = snapshot.data!;
+        // Show only if there's intelligence to share
+        if (data['risk_level'] == 'safe' && data['temp_f'] > 40) return const SizedBox.shrink(); // Hide if boring
+
+        final isDanger = data['risk_level'] == 'high';
+        final color = isDanger ? Colors.red : Colors.orange;
+        
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDanger 
+                ? [const Color(0xFFFF512F), const Color(0xFFDD2476)] 
+                : [Colors.orange.shade400, Colors.deepOrange.shade600],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8)),
+            ],
+          ),
+          child: Row(
+            children: [
+               const Icon(Icons.thunderstorm, color: Colors.white, size: 32).animate(onPlay: (c) => c.repeat()).shake(),
+               const SizedBox(width: 16),
+               Expanded(
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text(
+                       data['alert'] ?? 'Storm Watch Active',
+                       style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                     ),
+                     const SizedBox(height: 4),
+                     Text(
+                       data['recommendation'] ?? 'Heavy weather incoming. Check your home.',
+                       style: GoogleFonts.inter(color: Colors.white.withOpacity(0.9), fontSize: 13),
+                     ),
+                   ],
+                 ),
+               ),
+               ElevatedButton(
+                 onPressed: () {
+                    // Quick Action: Find Pro
+                 },
+                 style: ElevatedButton.styleFrom(
+                   backgroundColor: Colors.white,
+                   foregroundColor: color,
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                 ),
+                 child: const Text('Book Pro'),
+               ),
+            ],
+          ),
+        ).animate().slideY(begin: 0.1).fadeIn();
+      },
     );
   }
 
