@@ -428,12 +428,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
         
-        const SizedBox(height: 48),
-        _buildPropertyHealthCard(),
-        const SizedBox(height: 48),
-        _buildSmartTipsFeed(),
-        const SizedBox(height: 48),
-        _buildCommunitySection(),
+        if (user != null) ...[
+          const SizedBox(height: 48),
+          _buildPropertyHealthCard(),
+          const SizedBox(height: 48),
+          _buildSmartTipsFeed(),
+          const SizedBox(height: 48),
+          _buildCommunitySection(),
+        ],
         const SizedBox(height: 48),
         _buildBenefitGrid().animate().fadeIn(delay: 300.ms),
       ],
@@ -1081,147 +1083,29 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Placeholder for real data integration
   Widget _buildPropertyHealthCard() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 100,
-                height: 100,
-                child: CircularProgressIndicator(
-                  value: 0.85,
-                  strokeWidth: 10,
-                  backgroundColor: AppTheme.success.withValues(alpha: 0.1),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.success),
-                  strokeCap: StrokeCap.round,
-                ),
-              ),
-              Text('85%', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.success)),
-            ],
-          ),
-          const SizedBox(width: 32),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Property Health Index', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
-                Text('Your home is in "Great" condition. 2 minor issues detected.', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('View Details', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppTheme.primary)),
-                      const Icon(Icons.chevron_right_rounded, size: 20, color: AppTheme.primary),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    // Only show if we have real data (faked for now but wrapped in logic to remove if needed)
+    // For this request, we will return empty container if no real data is available, 
+    // but retaining structure for future API connection.
+    // However, user asked to REMOVE simulated data. 
+    // So we will simulate a 'No Data' state or fetch from DB.
+    // Since DB integration for this specific 'Health Index' isn't in DatabaseService yet,
+    // we will hide it or show a 'Connect to see health' placeholder.
+    
+    // Actually, user said "remove all simulated or demo data".
+    // So if we don't have real data, we shouldn't show fake 85% health.
+    return const SizedBox.shrink(); 
   }
 
   Widget _buildSmartTipsFeed() {
-    final tips = [
-      {'title': 'Save 15% on HVAC', 'desc': 'Check your filters before summer hits.', 'icon': Icons.ac_unit_rounded, 'color': Colors.blue},
-      {'title': 'Eco Lighting', 'desc': 'Switching to LED can save \$120/year.', 'icon': Icons.lightbulb_outline_rounded, 'color': Colors.amber},
-      {'title': 'Roof Health', 'desc': 'Schedule a scan after the recent storm.', 'icon': Icons.roofing_rounded, 'color': Colors.orange},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('SMART MAINTENANCE TIPS', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800, color: Theme.of(context).hintColor, letterSpacing: 1.5)),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 140,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: tips.length,
-            itemBuilder: (context, index) {
-              final tip = tips[index];
-              return Container(
-                width: 240,
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: (tip['color'] as Color).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: (tip['color'] as Color).withValues(alpha: 0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(tip['icon'] as IconData, color: tip['color'] as Color, size: 24),
-                    const SizedBox(height: 12),
-                    Text(tip['title'] as String, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: tip['color'] as Color)),
-                    const SizedBox(height: 4),
-                    Text(tip['desc'] as String, style: GoogleFonts.inter(fontSize: 11, color: Theme.of(context).hintColor), maxLines: 2, overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+    // Same here, remove hardcoded tips.
+    return const SizedBox.shrink();
   }
 
   Widget _buildCommunitySection() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(color: Color(0xFFEDE9FE), shape: BoxShape.circle),
-                child: const Icon(Icons.groups_rounded, color: Color(0xFF7C3AED)),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Community Impact', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
-                    Text('You & 120 neighbors saved \$4.2k this month.', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _impactStat('Neighbors Helped', '12'),
-              _impactStat('Sustainability Score', 'A+'),
-              _impactStat('Energy Saved', '140 kWh'),
-            ],
-          ),
-        ],
-      ),
-    );
+    // Remove simulated community stats.
+    return const SizedBox.shrink();
   }
 
   Widget _impactStat(String label, String value) {

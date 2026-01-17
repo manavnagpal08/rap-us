@@ -81,25 +81,7 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
   // Remove _buildHeader as it's now handled by MainScreen contextually.
 
 
-  Future<void> _createTestJob() async {
-    try {
-      await _db.createJob({
-        'title': 'Leaky Faucet Repair',
-        'customerName': 'John Smith (Test)',
-        'location': 'Downtown, LA',
-        'amount': 150.0,
-        'status': 'pending',
-        'customerId': 'test_user_123',
-        'contractorId': _auth.currentUser!.uid,
-      });
-      if (mounted) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.testJobCreated)));
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
-  }
+  // Removed _createTestJob as per user request to remove debug/demo data
 
   void _showJobDialog(Map<String, dynamic> job) {
     final l10n = AppLocalizations.of(context)!;
@@ -874,137 +856,12 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
   }
 
   Widget _buildActivityFeed(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(context, 'RECENT ACTIVITY FEED'),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
-          ),
-          child: Column(
-            children: [
-              _activityItem(context, 'New Quote Sent', 'Kitchen Remodel (Smith)', '2h ago', Icons.send_rounded, const Color(0xFF6366F1)),
-              const Divider(height: 32),
-              _activityItem(context, 'Payment Received', '\$1,200 deposited', '5h ago', Icons.check_circle_rounded, const Color(0xFF10B981)),
-              const Divider(height: 32),
-              _activityItem(context, 'New Message', 'John Smith sent a photo', '1d ago', Icons.chat_bubble_rounded, const Color(0xFFF59E0B)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _activityItem(BuildContext context, String title, String sub, String time, IconData icon, Color color) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15)),
-              Text(sub, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
-            ],
-          ),
-        ),
-        Text(time, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
-      ],
-    );
+    // Return empty or fetch real data. Since we don't have real logs stream setup in this view yet, hide.
+   return const SizedBox.shrink();
   }
 
   Widget _buildMarketingSection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 30, offset: const Offset(0, 15)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.stars_rounded, color: Colors.white, size: 40),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Marketing & Growth', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text('Grow your business with RAP Rewards', style: GoogleFonts.inter(color: Colors.white70)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              Expanded(
-                child: _rewardPointItem('Loyalty Points', '2,450', Icons.auto_awesome_rounded),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _rewardPointItem('Referrals', '12', Icons.people_alt_rounded),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Your Referral Code', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold)),
-                      Text('PRO-RAP-9921', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Theme.of(context).colorScheme.primary, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
-                  child: const Text('Share'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _rewardPointItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          Icon(icon, color: Colors.white, size: 24),
-          const SizedBox(height: 8),
-          Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(label, style: GoogleFonts.inter(fontSize: 11, color: Colors.white70)),
-        ],
-      ),
-    );
+    // Hide simulated marketing data
+    return const SizedBox.shrink();
   }
 }
