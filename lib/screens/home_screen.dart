@@ -1079,6 +1079,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
   Widget _buildPropertyHealthCard() {
     return Container(
       padding: const EdgeInsets.all(32),
