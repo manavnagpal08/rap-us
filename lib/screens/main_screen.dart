@@ -24,6 +24,7 @@ import 'package:rap_app/screens/contractor_leads_screen.dart';
 import 'package:rap_app/screens/contractor_earnings_screen.dart';
 import 'package:rap_app/screens/contractor_history_screen.dart';
 import 'package:rap_app/screens/rap_gpt_screen.dart';
+import 'package:rap_app/screens/ai_room_visualizer_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -173,6 +174,7 @@ class _MainScreenState extends State<MainScreen> {
         ]
       : [
           const HomeScreen(),
+          const AiRoomVisualizerScreen(),
           const MarketplaceScreen(),
           const HistoryScreen(),
           const MyHomeInventoryScreen(),
@@ -250,6 +252,11 @@ class _MainScreenState extends State<MainScreen> {
                               icon: const Icon(Icons.description_outlined),
                               selectedIcon: const Icon(Icons.description),
                               label: Text(l10n.estimates),
+                            ),
+                            NavigationRailDestination(
+                              icon: const Icon(Icons.auto_fix_high_outlined),
+                              selectedIcon: const Icon(Icons.auto_fix_high),
+                              label: const Text('AI Redesign'),
                             ),
                             NavigationRailDestination(
                               icon: const Icon(Icons.group_outlined),
@@ -528,6 +535,7 @@ class _MainScreenState extends State<MainScreen> {
       ]
       : [
           {'icon': Icons.description_outlined, 'activeIcon': Icons.description, 'label': l10n.estimates},
+          {'icon': Icons.auto_fix_high_outlined, 'activeIcon': Icons.auto_fix_high, 'label': 'AI Redesign'},
           {'icon': Icons.group_outlined, 'activeIcon': Icons.group, 'label': l10n.contractors},
           {'icon': Icons.shopping_bag_outlined, 'activeIcon': Icons.shopping_bag, 'label': l10n.history},
           {'icon': Icons.home_work_outlined, 'activeIcon': Icons.home_work, 'label': 'My Home'},
