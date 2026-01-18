@@ -23,7 +23,7 @@ class AuthService {
 
   // Auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
-  Future<UserCredential?> register(String email, String password, String fullName, {String role = 'user'}) async {
+  Future<UserCredential?> register(String email, String password, String fullName, {String role = 'user', String? photoBase64}) async {
     try {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -37,6 +37,7 @@ class AuthService {
         'fullName': fullName,
         'email': email,
         'role': role,
+        if (photoBase64 != null) 'photoBase64': photoBase64,
       });
 
       return credential;

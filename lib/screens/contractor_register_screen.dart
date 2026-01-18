@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class ContractorRegisterScreen extends StatefulWidget {
   const ContractorRegisterScreen({super.key});
@@ -71,47 +72,47 @@ class _ContractorRegisterScreenState extends State<ContractorRegisterScreen> {
                 ),
                 const SizedBox(height: 48),
                 
-                _buildCard([
-                  _inputLabel('Business Name'),
-                  TextField(controller: _businessNameController, decoration: _inputDecoration('e.g. Precision Carpentry Inc.')),
-                  const SizedBox(height: 24),
-                  
-                  _inputLabel('Trade Category'),
-                  TextField(controller: _categoryController, decoration: _inputDecoration('e.g. Plumber, Electrician, General Contractor')),
-                  const SizedBox(height: 24),
-                  
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _inputLabel('City'),
-                            TextField(controller: _cityController, decoration: _inputDecoration('e.g. Austin')),
-                          ],
+                  _buildCard([
+                    _inputLabel('Business Name'),
+                    TextField(controller: _businessNameController, decoration: _inputDecoration('e.g. Precision Carpentry Inc.')),
+                    const SizedBox(height: 24),
+                    
+                    _inputLabel('Trade Category'),
+                    TextField(controller: _categoryController, decoration: _inputDecoration('e.g. Plumber, Electrician, General Contractor')),
+                    const SizedBox(height: 24),
+                    
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _inputLabel('City'),
+                              TextField(controller: _cityController, decoration: _inputDecoration('e.g. Austin')),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _inputLabel('State'),
-                            TextField(controller: _stateController, decoration: _inputDecoration('e.g. TX')),
-                          ],
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _inputLabel('State'),
+                              TextField(controller: _stateController, decoration: _inputDecoration('e.g. TX')),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  _inputLabel('Short Bio / Expertise'),
-                  TextField(
-                    controller: _bioController, 
-                    maxLines: 4,
-                    decoration: _inputDecoration('Tell customers about your experience...'),
-                  ),
-                ]),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    _inputLabel('Short Bio / Expertise'),
+                    TextField(
+                      controller: _bioController, 
+                      maxLines: 4,
+                      decoration: _inputDecoration('Tell customers about your experience...'),
+                    ),
+                  ]).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
                 
                 const SizedBox(height: 48),
                 SizedBox(

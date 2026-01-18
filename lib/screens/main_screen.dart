@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/screens/home_screen.dart';
+import 'package:rap_app/widgets/premium_background.dart';
 import 'package:rap_app/screens/history_screen.dart';
 import 'package:rap_app/screens/marketplace_screen.dart';
 import 'package:rap_app/screens/settings_screen.dart';
@@ -65,12 +67,15 @@ class _MainScreenState extends State<MainScreen> {
     if (mounted) setState(() {});
   }
 
+  Map<String, dynamic>? _userProfile;
+  
   Future<void> _checkRole() async {
     final user = _auth.currentUser;
     if (user != null) {
       final profile = await _db.getUserProfile(user.uid);
       if (mounted) {
         setState(() {
+          _userProfile = profile;
           _userRole = profile?['role'] ?? 'user';
           _isLoading = false;
         });
@@ -181,9 +186,12 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBody: true, 
       bottomNavigationBar: isDesktop ? null : _buildCustomBottomNav(l10n, isContractor),
-      body: Column(
+      body: Stack(
         children: [
-          _buildTopHeader(isContractor),
+          const PremiumBackground(),
+          Column(
+            children: [
+              _buildTopHeader(isContractor),
           Expanded(
             child: Stack(
               children: [
@@ -348,6 +356,8 @@ class _MainScreenState extends State<MainScreen> {
               ],
             ),
           ),
+            ],
+          ),
         ],
       ),
     );
@@ -359,14 +369,23 @@ class _MainScreenState extends State<MainScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24, vertical: isMobile ? 16 : 12),
+      margin: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 32, vertical: isMobile ? 12 : 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85), 
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5))),
+        color: Theme.of(context).cardColor.withOpacity(0.9), 
+        borderRadius: BorderRadius.circular(100),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 5)),
+        ],
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
+      child: ClipRRect( // Added check to prevent overflow
+        borderRadius: BorderRadius.circular(100),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: SafeArea(
+            bottom: false,
+            child: Row(
           children: [
             if (!isContractor)
             Row(
@@ -468,10 +487,15 @@ class _MainScreenState extends State<MainScreen> {
                     child: CircleAvatar(
                       radius: isMobile ? 16 : 18,
                       backgroundColor: const Color(0xFF0055FF),
-                      child: Text(
-                        user.displayName?.substring(0, 1).toUpperCase() ?? 'U',
-                        style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
+                      backgroundImage: _userProfile?['photoBase64'] != null 
+                        ? MemoryImage(base64Decode(_userProfile!['photoBase64']))
+                        : null,
+                      child: _userProfile?['photoBase64'] == null 
+                        ? Text(
+                            user.displayName?.substring(0, 1).toUpperCase() ?? 'U',
+                            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ) 
+                        : null,
                     ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(delay: 2000.ms, duration: 1000.ms),
                   )
                 else
@@ -483,6 +507,8 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }

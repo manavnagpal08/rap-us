@@ -252,22 +252,58 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         // Welcome Header
         if (user != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Modern Hero Card
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 32),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [const Color(0xFF0055FF), const Color(0xFF00E5FF).withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(32),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.3), blurRadius: 30, offset: const Offset(0, 15)),
+              ],
+            ),
+            child: Stack(
               children: [
-                Text(
-                  '${l10n.welcomeBack}, ${user.displayName?.split(' ')[0] ?? 'User'}!',
-                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
-                ),
-                Text(
-                  'Here is what\'s happening with your projects today.',
-                  style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).hintColor),
+                // Background Pattern (Circles)
+                Positioned(right: -50, top: -50, child: Container(width: 200, height: 200, decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle))),
+                Positioned(right: 20, bottom: -50, child: Container(width: 150, height: 150, decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle))),
+                
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.welcomeBack}, ${user.displayName?.split(' ')[0] ?? 'User'}! 👋',
+                      style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ready to tackle your next project?',
+                      style: GoogleFonts.inter(fontSize: 16, color: Colors.white.withOpacity(0.9)),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {}, // Scroll to upload?
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text("New Estimate"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF0055FF),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))
+                      ),
+                    )
+                  ],
                 ),
               ],
             ),
-          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, curve: Curves.easeOut),
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
 
         // Quick Stats Row
         _buildQuickStats().animate().fadeIn(delay: 200.ms).slideX(begin: 0.2),
@@ -361,22 +397,47 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Column(
             children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0055FF), Color(0xFF00E5FF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Pulse Ring 1
+                  Container(width: 140, height: 140, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3), width: 1))).animate(onPlay: (c) => c.repeat()).scale(begin: const Offset(0.8,0.8), end: const Offset(1.5,1.5), duration: 2000.ms).fadeOut(curve: Curves.easeOut),
+                  // Pulse Ring 2
+                  Container(width: 140, height: 140, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF0055FF).withOpacity(0.3), width: 1))).animate(delay: 1000.ms, onPlay: (c) => c.repeat()).scale(begin: const Offset(0.8,0.8), end: const Offset(1.5,1.5), duration: 2000.ms).fadeOut(curve: Curves.easeOut),
+                  
+                  // Main Circle
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0055FF), Color(0xFF00E5FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 15)),
+                      ],
+                    ),
+                    child: const Icon(Icons.add_a_photo_outlined, size: 50, color: Colors.white),
+                  ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scaleXY(end: 1.05, duration: 2000.ms, curve: Curves.easeInOut),
+
+                  // Scanner Line
+                  Positioned.fill(
+                     child: Container(
+                       decoration: BoxDecoration(
+                         gradient: LinearGradient(
+                           begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                           colors: [Colors.transparent, Colors.white.withOpacity(0.5), Colors.transparent],
+                           stops: const [0.4, 0.5, 0.6]
+                         ),
+                         shape: BoxShape.circle,
+                       ),
+                     ).animate(onPlay: (c) => c.repeat()).slideY(begin: -1.2, end: 1.2, duration: 1500.ms, curve: Curves.easeInOut),
                   ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.4), blurRadius: 30, offset: const Offset(0, 15)),
-                  ],
-                ),
-                child: const Icon(Icons.add_a_photo_outlined, size: 50, color: Colors.white),
-              ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scaleXY(end: 1.05, duration: 2000.ms, curve: Curves.easeInOut),
+                ],
+              ),
               const SizedBox(height: 32),
               Text(
                 l10n.startNewEstimate,
@@ -485,14 +546,21 @@ class _HomeScreenState extends State<HomeScreen> {
         width: fullWidth ? double.infinity : null,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor.withOpacity(0.7), // Semi-transparent
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFEEEEEE)),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
+          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 24),
@@ -502,7 +570,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(title, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
           ],
         ),
-      );
+      ),
+    ),
+   ); // Extra semi-colon just in case but formatting handles it
   }
 
   Widget _buildLargeActionButton({required VoidCallback onPressed, required IconData icon, required String label, required Color color}) {
@@ -598,14 +668,21 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-              Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+              Text(subtitle, style: GoogleFonts.inter(fontSize: 14, color: Theme.of(context).hintColor)), 
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.schedule, size: 12, color: Theme.of(context).hintColor),
+                  const SizedBox(width: 4),
+                  Text(time, style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                ],
+              ),
             ],
           ),
         ),
-        Text(time, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8))),
       ],
-    );
+    ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1);
   }
 
   Widget _buildQuestionSection() {

@@ -39,37 +39,50 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
       onError: (e) => debugPrint('Speech error: $e'),
       onStatus: (status) => debugPrint('Speech status: $status'),
     );
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     if (_auth.currentUser == null) return const Center(child: Text('Please log in'));
     final l10n = AppLocalizations.of(context)!;
+    final isWide = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(MediaQuery.of(context).size.width > 600 ? 40 : 20),
+        padding: EdgeInsets.all(isWide ? 40 : 20),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+            constraints: const BoxConstraints(maxWidth: 1200),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatsSection(context),
+                _buildWelcomeSection(context),
                 const SizedBox(height: 32),
-                _buildActionGrid(context),
+                _buildStatsSection(context),
                 const SizedBox(height: 40),
                 _buildVerificationBanner(context),
                 const SizedBox(height: 40),
-                _buildSectionTitle(context, l10n.activeProjects),
-                _buildProjectList(context),
-                const SizedBox(height: 48),
-                _buildActivityFeed(context),
+                
+                if (isWide)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 2, child: _buildActiveProjectsSection(context, l10n)),
+                      const SizedBox(width: 40),
+                      Expanded(flex: 1, child: _buildActivityFeed(context)),
+                    ],
+                  )
+                else ...[
+                  _buildActiveProjectsSection(context, l10n),
+                  const SizedBox(height: 48),
+                  _buildActivityFeed(context),
+                ],
+
                 const SizedBox(height: 48),
                 _buildMarketingSection(context),
-                const SizedBox(height: 40),
+                const SizedBox(height: 80), 
               ],
             ),
           ),
@@ -78,11 +91,361 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
     );
   }
 
-  // Remove _buildHeader as it's now handled by MainScreen contextually.
+  Widget _buildWelcomeSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Contractor Hub',
+          style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+        ).animate().fadeIn().slideX(),
+        Text(
+          'Manage your projects, leads, and earnings.',
+          style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).hintColor),
+        ).animate().fadeIn(delay: 200.ms).slideX(),
+      ],
+    );
+  }
 
+  Widget _buildActiveProjectsSection(BuildContext context, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle(context, l10n.activeProjects),
+            TextButton.icon(
+              onPressed: () {}, 
+              icon: const Icon(Icons.arrow_forward, size: 16),
+              label: Text('View All', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        _buildProjectList(context),
+      ],
+    );
+  }
 
-  // Removed _createTestJob as per user request to remove debug/demo data
+  Widget _buildVerificationBanner(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _db.getContractors().first,
+      builder: (context, snapshot) {
+        final contractor = snapshot.data?.firstWhere((c) => c['id'] == _auth.currentUser!.uid, orElse: () => {});
+        final isVerified = contractor?['isVerified'] == true;
 
+        if (isVerified) return const SizedBox.shrink();
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.warning.withValues(alpha: 0.15), AppTheme.warning.withValues(alpha: 0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppTheme.warning.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.8), shape: BoxShape.circle),
+                child: const Icon(Icons.verified_user_outlined, color: AppTheme.warning, size: 28),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.verifiedPro, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                    Text(l10n.unverifiedNote, style: GoogleFonts.inter(color: Theme.of(context).hintColor, height: 1.5)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationCenterScreen())),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.warning, 
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text(l10n.verifyNow, style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1);
+      }
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 16),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800, color: Theme.of(context).hintColor, letterSpacing: 1.5),
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _db.getContractorStats(_auth.currentUser!.uid),
+      builder: (context, snapshot) {
+        final stats = snapshot.data ?? {'leads': 0, 'active': 0, 'earnings': 0.0};
+        
+        return Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          children: [
+            _statCard(context, l10n.totalLeads, '${stats['leads']}', Icons.flash_on_rounded, AppTheme.accent),
+            _statCard(context, l10n.activeJobs, '${stats['active']}', Icons.engineering_rounded, AppTheme.success),
+            _statCard(context, l10n.revenue, '\$${stats['earnings']}', Icons.payments_rounded, Theme.of(context).colorScheme.primary),
+          ],
+        );
+      }
+    );
+  }
+
+  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
+    bool isWide = MediaQuery.of(context).size.width > 900;
+    final width = isWide ? 300.0 : (MediaQuery.of(context).size.width - (isWide ? 0 : 40)) / 2 - 10;
+    
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              Icon(Icons.more_horiz, color: Theme.of(context).hintColor),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(value, style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          Text(label, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+  }
+
+  Widget _buildProjectList(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _db.getContractorJobs(_auth.currentUser!.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+           return const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
+        }
+        
+        final allJobs = snapshot.data ?? [];
+        final jobs = allJobs.where((j) => j['status'] == 'in_progress').toList();
+        final l10n = AppLocalizations.of(context)!;
+        
+        if (jobs.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.assignment_outlined, size: 48, color: Theme.of(context).hintColor.withValues(alpha: 0.2)),
+                const SizedBox(height: 16),
+                Text(l10n.noActiveJobs, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 16),
+                OutlinedButton(onPressed: (){}, child: const Text('Browse Leads')),
+              ],
+            ),
+          );
+        }
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: jobs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 16),
+          itemBuilder: (context, index) {
+            final job = jobs[index];
+            return InkWell(
+              onTap: () => _showJobDialog(job),
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 60, height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Theme.of(context).primaryColor.withValues(alpha: 0.1), Theme.of(context).primaryColor.withValues(alpha: 0.05)],
+                          begin: Alignment.topLeft, end: Alignment.bottomRight
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.home_work_rounded, color: Theme.of(context).primaryColor),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(job['title'] ?? l10n.untitledJob, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.person_outline_rounded, size: 14, color: Theme.of(context).hintColor),
+                              const SizedBox(width: 4),
+                              Text('${job['customerName'] ?? 'Customer'}', style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
+                              const SizedBox(width: 12),
+                              Icon(Icons.location_on_outlined, size: 14, color: Theme.of(context).hintColor),
+                              const SizedBox(width: 4),
+                              Expanded(child: Text('${job['location'] ?? 'Remote'}', style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor), overflow: TextOverflow.ellipsis)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('\$${job['amount'] ?? 0}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).colorScheme.primary)),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: AppTheme.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                          child: Text('ON TRACK', style: GoogleFonts.inter(color: AppTheme.success, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: (100 * index).ms).slideY(begin: 0.1);
+          },
+        );
+      }
+    );
+  }
+
+  Widget _buildActivityFeed(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(context, 'Recent Activity'), 
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+             color: Theme.of(context).cardColor,
+             borderRadius: BorderRadius.circular(24),
+             border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+          ),
+          child: Column(
+            children: [
+              _feedItem(context, 'New lead in Austin', '2 mins ago', Icons.flash_on_rounded, AppTheme.accent),
+              const Divider(height: 32),
+              _feedItem(context, 'Payment released', '1 hour ago', Icons.attach_money_rounded, AppTheme.success),
+              const Divider(height: 32),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _feedItem(BuildContext context, String title, String time, IconData icon, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+              Text(time, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 12)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMarketingSection(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        gradient: const LinearGradient(colors: [Color(0xFF1E1E2E), Color(0xFF2D2D44)]),
+        image: const DecorationImage(
+           image: AssetImage('assets/images/grid_pattern.png'),
+           opacity: 0.05,
+           repeat: ImageRepeat.repeat,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Boost Your Visibility', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text('Get featured in the "Top Pros" section effectively.', style: GoogleFonts.inter(color: Colors.white70)),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: (){},
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black),
+                  child: const Text('Learn More'),
+                ),
+              ],
+            ),
+          ),
+           if (MediaQuery.of(context).size.width > 600)
+             Icon(Icons.rocket_launch_rounded, size: 80, color: Colors.white.withValues(alpha: 0.1)),
+        ],
+      ),
+    );
+  }
+  
+  // RESTORED LOGIC FROM ORIGINAL FILE
   void _showJobDialog(Map<String, dynamic> job) {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
@@ -96,7 +459,7 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                    Text(l10n.jobDetails, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
@@ -204,7 +567,6 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                     ),
                   ),
                   
-                  // Pro Mode: Voice Log
                   if (job['status'] == 'in_progress')
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
@@ -252,14 +614,14 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(width: 100, child: Text(label, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontWeight: FontWeight.w600))),
-          Expanded(child: Text(value, style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
+          Expanded(child: Text(value ?? '-', style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -286,18 +648,6 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
               controller: reasonController,
               decoration: const InputDecoration(labelText: 'Reason for Change', hintText: 'Explain the scope change...'),
               maxLines: 3,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppTheme.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-              child: Row(
-                children: [
-                  const Icon(Icons.psychology_outlined, color: AppTheme.accent, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text('AI will analyze this reason for the customer.', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.accent))),
-                ],
-              ),
             ),
           ],
         ),
@@ -353,50 +703,6 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
     );
   }
 
-  Widget _buildVerificationBanner(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _db.getContractors().first,
-      builder: (context, snapshot) {
-        final contractor = snapshot.data?.firstWhere((c) => c['id'] == _auth.currentUser!.uid, orElse: () => {});
-        final isVerified = contractor?['isVerified'] == true;
-
-        if (isVerified) return const SizedBox.shrink();
-
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppTheme.warning.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.warning.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.security_rounded, color: AppTheme.warning, size: 32),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.verifiedPro, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-                    Text(l10n.unverifiedNote, style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
-                  ],
-                ),
-              ),
-                ElevatedButton(
-                onPressed: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationCenterScreen()));
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.warning, foregroundColor: Colors.white),
-                child: Text(l10n.verifyNow),
-              ),
-            ],
-          ),
-        );
-      }
-    );
-  }
-
   void _showAddLogDialog(Map<String, dynamic> job) {
     final noteController = TextEditingController();
     showDialog(
@@ -438,231 +744,6 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
     );
   }
 
-  void _showVerificationDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    File? selectedFile;
-    bool isUploading = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: Text(l10n.docVerificationTitle),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.docVerificationSubtitle),
-                const SizedBox(height: 24),
-                ListTile(
-                  leading: Icon(selectedFile != null ? Icons.check_circle_rounded : Icons.description_outlined, 
-                      color: selectedFile != null ? AppTheme.success : null),
-                  title: Text(l10n.insurancePolicy),
-                  subtitle: Text(selectedFile != null ? 'File selected: ${selectedFile!.path.split('/').last}' : l10n.pdfOrImage),
-                  trailing: const Icon(Icons.upload_file),
-                  onTap: () async {
-                    FilePickerResult? result = await FilePicker.platform.pickFiles(
-                      type: FileType.custom,
-                      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-                    );
-                    if (result != null) {
-                      setDialogState(() => selectedFile = File(result.files.single.path!));
-                    }
-                  },
-                ),
-                if (isUploading) ...[
-                  const SizedBox(height: 16),
-                  const LinearProgressIndicator(),
-                  const SizedBox(height: 8),
-                  Text('Uploading highly secured documents...', style: GoogleFonts.inter(fontSize: 10, color: Theme.of(context).hintColor)),
-                ],
-              ],
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
-              ElevatedButton(
-                onPressed: (selectedFile == null || isUploading) ? null : () async {
-                  setDialogState(() => isUploading = true);
-                  
-                  final uid = _auth.currentUser!.uid;
-                  final fileName = 'verification/$uid/insurance_${DateTime.now().millisecondsSinceEpoch}.${selectedFile!.path.split('.').last}';
-                  
-                  final downloadUrl = await _db.uploadFile(fileName, selectedFile!);
-                  
-                  if (downloadUrl != null) {
-                    await _db.requestVerification(uid, {
-                      'insuranceUrl': downloadUrl,
-                      'fileName': selectedFile!.path.split('/').last,
-                      'uploadedAt': DateTime.now().toIso8601String(),
-                    });
-                    
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.docsSubmitted)));
-                    }
-                  } else {
-                    setDialogState(() => isUploading = false);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload failed. Please try again.'), backgroundColor: AppTheme.error));
-                    }
-                  }
-                },
-                child: isUploading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(l10n.submitForAiReview),
-              ),
-            ],
-          );
-        }
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 16),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800, color: Theme.of(context).hintColor, letterSpacing: 1.5),
-      ),
-    );
-  }
-
-  Widget _buildStatsSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _db.getContractorStats(_auth.currentUser!.uid),
-      builder: (context, snapshot) {
-        final stats = snapshot.data ?? {'leads': 0, 'active': 0, 'earnings': 0.0};
-        
-        return Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          children: [
-            _statCard(context, l10n.totalLeads, '${stats['leads']}', Icons.flash_on_rounded, AppTheme.accent),
-            _statCard(context, l10n.activeJobs, '${stats['active']}', Icons.work_outline_rounded, AppTheme.success),
-            _statCard(context, l10n.revenue, '\$${stats['earnings']}', Icons.payments_outlined, Theme.of(context).colorScheme.primary),
-          ],
-        );
-      }
-    );
-  }
-
-  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
-    bool isWide = MediaQuery.of(context).size.width > 900;
-    
-    return Container(
-      width: isWide ? 300 : (MediaQuery.of(context).size.width - 60) / 2,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 20),
-          Text(value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-          Text(label, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 13, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProjectList(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _db.getContractorJobs(_auth.currentUser!.uid),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-           return const Center(child: Padding(
-             padding: EdgeInsets.all(40.0),
-             child: CircularProgressIndicator(),
-           ));
-        }
-        
-        final allJobs = snapshot.data ?? [];
-        final jobs = allJobs.where((j) => j['status'] == 'in_progress').toList();
-        final l10n = AppLocalizations.of(context)!;
-        if (jobs.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Column(
-                children: [
-                  Icon(Icons.assignment_outlined, size: 64, color: Theme.of(context).hintColor.withValues(alpha: 0.2)),
-                  const SizedBox(height: 16),
-                  Text(l10n.noActiveJobs, style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 16)),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: jobs.length,
-          itemBuilder: (context, index) {
-            final job = jobs[index];
-            return InkWell(
-              onTap: () => _showJobDialog(job),
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(Icons.maps_home_work_outlined, color: Theme.of(context).colorScheme.primary),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(job['title'] ?? l10n.untitledJob, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
-                          Text('${l10n.customer}: ${job['customerName'] ?? 'Unknown'} • ${job['location'] ?? 'No Location'}', style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('\$${job['amount'] ?? 0}', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).colorScheme.primary)),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: AppTheme.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                          child: Text((job['status'] ?? 'PENDING').toUpperCase(), style: const TextStyle(color: AppTheme.warning, fontSize: 10, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 20),
-                    Icon(Icons.chevron_right_rounded, color: Theme.of(context).hintColor),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      }
-    );
-  }
   void _startVoiceLogSession(Map<String, dynamic> job) {
     String recognizedText = '';
     final l10n = AppLocalizations.of(context)!;
@@ -673,7 +754,6 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) {
-          // Auto-start listening when sheet opens
           if (!_isListening && _speechEnabled) {
             _speech.listen(
               onResult: (result) {
@@ -755,8 +835,6 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
                           _speech.stop();
                           setSheetState(() => _isListening = false);
                           
-                          // Process with AI
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI is formatting your log...')));
                           Navigator.pop(ctx);
                           
                           try {
@@ -793,75 +871,5 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
       _speech.stop();
       setState(() => _isListening = false);
     });
-  }
-
-  Widget _buildActionGrid(BuildContext context) {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        _actionCard(
-          context,
-          'Find Leads',
-          Icons.search_rounded,
-          const Color(0xFF6366F1),
-          () => Navigator.pushNamed(context, '/contractor_leads'),
-        ),
-        _actionCard(
-          context,
-          'Earnings',
-          Icons.account_balance_wallet_outlined,
-          const Color(0xFF10B981),
-          () => Navigator.pushNamed(context, '/contractor_earnings'),
-        ),
-        _actionCard(
-          context,
-          'Project History',
-          Icons.history_rounded,
-          const Color(0xFFF59E0B),
-          () => Navigator.pushNamed(context, '/contractor_history'),
-        ),
-        _actionCard(
-          context,
-          'Marketplace',
-          Icons.storefront_outlined,
-          const Color(0xFFEC4899),
-          () => Navigator.pushNamed(context, '/marketplace'),
-        ),
-      ],
-    );
-  }
-
-  Widget _actionCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: (MediaQuery.of(context).size.width - 60) / 2 > 200 ? 180 : (MediaQuery.of(context).size.width - 64) / 2,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 12),
-            Text(title, textAlign: TextAlign.center, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityFeed(BuildContext context) {
-    // Return empty or fetch real data. Since we don't have real logs stream setup in this view yet, hide.
-   return const SizedBox.shrink();
-  }
-
-  Widget _buildMarketingSection(BuildContext context) {
-    // Hide simulated marketing data
-    return const SizedBox.shrink();
   }
 }

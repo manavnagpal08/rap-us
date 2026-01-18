@@ -150,52 +150,73 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isWide = MediaQuery.of(context).size.width > 1000;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           // Left Side: Visual/Branding (Only on wide screens)
-          if (MediaQuery.of(context).size.width > 1000)
+          if (isWide)
             Expanded(
               flex: 3,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: AppTheme.primaryGradient,
                 ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(32),
+                child: Stack(
+                  children: [
+                     // Abstract shapes
+                    Positioned(
+                      top: -100, left: -100,
+                      child: Container(
+                        width: 400, height: 400,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.05),
                         ),
-                        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 80),
-                      ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-                      const SizedBox(height: 40),
-                      Text(
-                        'RAP PRECISION',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 48,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                        ),
-                      ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.newStandard,
-                        style: GoogleFonts.inter(
-                          color: Colors.white60,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 4,
-                        ),
-                      ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0),
-                    ],
-                  ),
+                      ),
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 10)),
+                              ],
+                            ),
+                            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 80),
+                          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                          const SizedBox(height: 40),
+                          Text(
+                            'RAP PRECISION',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                            ),
+                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
+                          const SizedBox(height: 16),
+                          Text(
+                            l10n.newStandard,
+                            style: GoogleFonts.inter(
+                              color: Colors.white60,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 4,
+                            ),
+                          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -211,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildMobileLogo(),
+                      if (!isWide) _buildMobileLogo(),
                       const SizedBox(height: 48),
                       Text(
                         l10n.signIn,
@@ -220,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
                       const SizedBox(height: 8),
                       Text(
                         l10n.signInSubtitle,
@@ -228,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 16,
                           color: Theme.of(context).hintColor,
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1, end: 0),
                       const SizedBox(height: 48),
                       
                       // Email Field
@@ -237,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         style: GoogleFonts.inter(),
                         decoration: _inputDecoration('name@company.com', Icons.alternate_email_rounded),
-                      ),
+                      ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                       
                       const SizedBox(height: 24),
                       
@@ -257,7 +278,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                           ),
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
                       
                       const SizedBox(height: 12),
                       Align(
@@ -278,14 +299,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 32),
                       
                       // Sign In Button
-                      SizedBox(
+                      Container(
                         width: double.infinity,
                         height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                             BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                          ],
+                        ),
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).colorScheme.primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
                           ),
                           child: _isLoading 
                             ? const SpinKitThreeBounce(color: Colors.white, size: 20)
@@ -304,6 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: Theme.of(context).dividerColor),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            backgroundColor: Theme.of(context).cardColor,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -336,6 +365,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: Theme.of(context).dividerColor),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            backgroundColor: Theme.of(context).cardColor,
+                            foregroundColor: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ).animate().fadeIn(delay: 850.ms).scale(),
@@ -361,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ).animate().fadeIn(delay: 900.ms),
-                    ].animate(interval: 50.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                    ],
                   ),
                 ),
               ),
@@ -373,7 +404,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildMobileLogo() {
-    if (MediaQuery.of(context).size.width > 1000) return const SizedBox();
     return Row(
       children: [
         Container(
@@ -407,6 +437,20 @@ class _LoginScreenState extends State<LoginScreen> {
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(icon, color: Theme.of(context).hintColor, size: 20),
+      filled: true,
+      fillColor: Theme.of(context).cardColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+      ),
     );
   }
 }

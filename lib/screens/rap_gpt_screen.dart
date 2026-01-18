@@ -68,7 +68,7 @@ class _RapGptSheetState extends State<RapGptSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Row(
                   children: [
-                     const Icon(Icons.psychology_alt, color: Color(0xFF00FF9D), size: 28).animate(onPlay: (c) => c.repeat(reverse: true)).glow(color: const Color(0xFF00FF9D), radius: 20),
+                     const Icon(Icons.psychology_alt, color: Color(0xFF00FF9D), size: 28).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(color: const Color(0xFF00FF9D)),
                      const SizedBox(width: 12),
                      Expanded(
                        child: Column(
