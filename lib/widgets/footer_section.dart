@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:rap_app/screens/legal_screen.dart';
+import 'package:rap_app/screens/about_rap_screen.dart';
 
 class FooterSection extends StatelessWidget {
   const FooterSection({super.key});
@@ -174,7 +175,7 @@ class FooterSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "RAP US",
+                    "RAP Colorado",
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -250,9 +251,13 @@ class FooterSection extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           child: InkWell(
             onTap: () {
-               ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text('Navigate to $link (Coming Soon)'), duration: const Duration(seconds: 1)),
-               );
+               if (link == "About Us") {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutRapScreen()));
+               } else {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(content: Text('Navigate to $link (Coming Soon)'), duration: const Duration(seconds: 1)),
+                 );
+               }
             },
             child: Text(
               link,
