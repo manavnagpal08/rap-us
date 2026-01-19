@@ -312,18 +312,15 @@ class FooterSection extends StatelessWidget {
       onTap: () {
         if (text == "Privacy Policy") {
           LegalScreen.show(context, title: "Privacy Policy", type: "privacy_policy");
-        } else if (text.contains("Terms")) { // Matches "Terms" and "Terms of Service"
+        } else if (text.contains("Terms")) { 
           LegalScreen.show(context, title: "Terms of Service", type: "terms_conditions");
+        } else if (text.contains("Cookie")) {
+           LegalScreen.show(context, title: "Cookie Policy", type: "cookie_policy");
         } else {
-           // Show dialog for simulated pages or others
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(text),
-              content: Text("This is the $text page content holder."),
-              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close"))],
-            ),
-          );
+           // For other informational pages, we show a 'Coming Soon' message instead of a debug dialog
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('$text page is coming soon!'), duration: const Duration(seconds: 1)),
+           );
         }
       },
       child: Text(
