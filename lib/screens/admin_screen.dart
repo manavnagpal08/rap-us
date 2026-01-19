@@ -18,6 +18,7 @@ class _AdminScreenState extends State<AdminScreen> {
   final _geminiController = TextEditingController();
   final _privacyController = TextEditingController();
   final _termsController = TextEditingController();
+  final _cookieController = TextEditingController();
   String _activeProvider = 'gemini';
   bool _isSaving = false;
 
@@ -249,6 +250,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final settings = await _db.getAiSettings();
     final privacy = await _db.getLegalText('privacy_policy');
     final terms = await _db.getLegalText('terms_conditions');
+    final cookies = await _db.getLegalText('cookie_policy');
 
     setState(() {
       _promptController.text = settings['system_prompt'] ?? '';
@@ -257,6 +259,7 @@ class _AdminScreenState extends State<AdminScreen> {
       _activeProvider = settings['active_provider'] ?? 'gemini';
       _privacyController.text = privacy ?? '';
       _termsController.text = terms ?? '';
+      _cookieController.text = cookies ?? '';
     });
 
     // Load Maintenance Settings
@@ -290,6 +293,7 @@ class _AdminScreenState extends State<AdminScreen> {
       });
       await _db.updateLegalText('privacy_policy', _privacyController.text);
       await _db.updateLegalText('terms_conditions', _termsController.text);
+      await _db.updateLegalText('cookie_policy', _cookieController.text);
 
       await _db.updateMaintenanceSettings({
         'isEnabled': _isMaintenanceMode,
@@ -651,6 +655,43 @@ class _AdminScreenState extends State<AdminScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _termsController,
+                  maxLines: 6,
+                  style: GoogleFonts.inter(fontSize: 14),
+                  decoration: InputDecoration(
+                    fillColor: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Cookie Policy (Markdown)',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        _cookieController.text = _defaultCookiePolicy;
+                      },
+                      child: const Text(
+                        'Generate Default',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _cookieController,
                   maxLines: 6,
                   style: GoogleFonts.inter(fontSize: 14),
                   decoration: InputDecoration(
@@ -1920,3 +1961,24 @@ We may terminate or suspend access to our Service immediately, without prior not
     );
   }
 }
+
+const String _defaultCookiePolicy = '''
+# Cookie Policy
+
+## 1. Introduction
+We use cookies to enhance your experience on our website. This Cookie Policy explains what cookies are, how we use them, and your choices regarding cookies.
+
+## 2. What Are Cookies?
+Cookies are small text files that are stored on your device when you visit a website. They help us remember your preferences and improve site functionality.
+
+## 3. How We Use Cookies
+- **Essential Cookies**: Necessary for the website to function (e.g., authentication).
+- **Analytics Cookies**: Help us understand how visitors use our site.
+- **Preference Cookies**: Remember your settings (e.g., language).
+
+## 4. Managing Cookies
+You can control and manage cookies through your browser settings. Please note that disabling cookies may affect some features of our website.
+
+## 5. Contact Us
+If you have any questions about our Cookie Policy, please contact us at support@rap-colorado.com.
+''';
