@@ -17,6 +17,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'package:rap_app/services/weather_service.dart';
+import 'package:rap_app/widgets/footer_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -707,6 +708,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         const SizedBox(height: 48),
         _buildBenefitGrid().animate().fadeIn(delay: 300.ms),
+        const SizedBox(height: 64),
+        const FooterSection(),
       ],
     );
   }
