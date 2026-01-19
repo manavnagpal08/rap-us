@@ -64,7 +64,7 @@ class _ContractorEarningsScreenState extends State<ContractorEarningsScreen> {
         gradient: AppTheme.primaryGradient,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: AppTheme.primary.withOpacity(0.3), blurRadius: 30, offset: const Offset(0, 15)),
+          BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 30, offset: const Offset(0, 15)),
         ],
       ),
       child: Column(
@@ -75,7 +75,7 @@ class _ContractorEarningsScreenState extends State<ContractorEarningsScreen> {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -96,7 +96,7 @@ class _ContractorEarningsScreenState extends State<ContractorEarningsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +116,7 @@ class _ContractorEarningsScreenState extends State<ContractorEarningsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [

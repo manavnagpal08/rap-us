@@ -508,4 +508,99 @@ class DatabaseService {
       'verifiedAt': FieldValue.serverTimestamp(),
     });
   }
+
+  // Legal & Content Management
+  Future<String?> getLegalText(String type) async {
+    final doc = await _db.collection('settings').doc('legal').get();
+    return doc.data()?[type] as String?;
+  }
+
+  Future<void> updateLegalText(String type, String content) async {
+    await _db.collection('settings').doc('legal').set({
+      type: content,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+  
+  // Notifications
+  Stream<List<Map<String, dynamic>>> getNotifications(String uid) {
+    return _db.collection('users').doc(uid).collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  // Admin: User Management
+  Stream<List<Map<String, dynamic>>> getAllUsers() {
+    return _db.collection('users')
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  Future<void> toggleUserBlock(String uid, bool block) async {
+    await _db.collection('users').doc(uid).update({
+      'isBlocked': block,
+      'status': block ? 'blocked' : 'active',
+    });
+  }
+
+  // Maintenance Mode
+  Stream<Map<String, dynamic>> getMaintenanceSettings() {
+    return _db.collection('settings').doc('maintenance').snapshots().map((doc) => doc.data() ?? {
+      'isEnabled': false,
+      'message': 'We are currently under maintenance. Please check back later.',
+      'allowFeedback': true,
+    });
+  }
+
+  Future<void> updateMaintenanceSettings(Map<String, dynamic> settings) async {
+    await _db.collection('settings').doc('maintenance').set(settings, SetOptions(merge: true));
+  }
+
+  Future<void> submitMaintenanceFeedback(Map<String, dynamic> feedback) async {
+    await _db.collection('maintenance_feedback').add({
+      ...feedback,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getMaintenanceFeedback() {
+    return _db.collection('maintenance_feedback')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
+  // Global Banner
+  Stream<Map<String, dynamic>> getBannerSettings() {
+    return _db.collection('settings').doc('banner').snapshots().map((doc) => doc.data() ?? {
+      'isEnabled': false,
+      'message': '',
+      'imageUrl': '',
+      'link': '',
+    });
+  }
+
+  Future<void> updateBannerSettings(Map<String, dynamic> settings) async {
+    await _db.collection('settings').doc('banner').set(settings, SetOptions(merge: true));
+  }
+
+  // Broadcast Notifications
+  Future<void> sendBroadcastNotification(String title, String body) async {
+    await _db.collection('broadcasts').add({
+      'title': title,
+      'body': body,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getBroadcastNotifications() {
+    return _db.collection('broadcasts')
+        .orderBy('createdAt', descending: true)
+        .limit(5)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
 }

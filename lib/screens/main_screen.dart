@@ -16,7 +16,6 @@ import 'package:rap_app/services/ai_service.dart';
 import 'package:rap_app/screens/my_home_inventory_screen.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:rap_app/screens/emergency_sos_dialog.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'dart:convert';
 import 'package:rap_app/screens/contractor_dashboard.dart';
@@ -25,6 +24,10 @@ import 'package:rap_app/screens/contractor_earnings_screen.dart';
 import 'package:rap_app/screens/contractor_history_screen.dart';
 import 'package:rap_app/screens/rap_gpt_screen.dart';
 import 'package:rap_app/screens/ai_room_visualizer_screen.dart';
+import 'package:rap_app/screens/admin_screen.dart';
+import 'package:rap_app/screens/maintenance_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -43,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
   bool _speechEnabled = false;
+  String? _lastBroadcastId;
 
   final TextEditingController _chatController = TextEditingController();
   final List<Map<String, String>> _chatMessages = [
@@ -58,6 +62,7 @@ class _MainScreenState extends State<MainScreen> {
     _speech = stt.SpeechToText();
     _initSpeech();
     _checkRole();
+    _listenForBroadcasts();
   }
 
   void _initSpeech() async {
@@ -84,6 +89,45 @@ class _MainScreenState extends State<MainScreen> {
     } else {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  bool get _isAdmin {
+    final email = _auth.currentUser?.email;
+    if (email == 'kaaysha.rao@gmail.com' || email == 'admin@rap.com' || email == 'manav.nagpal2005@gmail.com') return true;
+    return _userProfile?['role'] == 'admin';
+  }
+
+  void _listenForBroadcasts() {
+    _db.getBroadcastNotifications().listen((notifications) {
+      if (notifications.isNotEmpty && mounted) {
+        final last = notifications.first;
+        if (_lastBroadcastId != last['id']) {
+          setState(() => _lastBroadcastId = last['id']);
+          _showBroadcastNotification(last['title'] ?? 'Announcement', last['body'] ?? '');
+        }
+      }
+    });
+  }
+
+  void _showBroadcastNotification(String title, String body) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(body, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+          ],
+        ),
+        backgroundColor: const Color(0xFF0055FF),
+        duration: const Duration(seconds: 10),
+        action: SnackBarAction(label: 'Dismiss', textColor: Colors.white, onPressed: () {}),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(24),
+      ),
+    );
   }
 
   void _startListening() async {
@@ -163,6 +207,9 @@ class _MainScreenState extends State<MainScreen> {
     final l10n = AppLocalizations.of(context)!;
     final bool isContractor = _userRole == 'contractor';
 
+    final bool isDesktop = MediaQuery.of(context).size.width >= 900;
+    final bool isGuest = FirebaseAuth.instance.currentUser == null;
+
     final List<Widget> screens = isContractor 
       ? [
           const ContractorDashboard(),
@@ -171,202 +218,289 @@ class _MainScreenState extends State<MainScreen> {
           const ContractorHistoryScreen(),
           const SettingsScreen(),
           const DocumentationScreen(),
+          if (_isAdmin) const AdminScreen(),
         ]
       : [
           const HomeScreen(),
-          const AiRoomVisualizerScreen(),
+          if (!isGuest) const AiRoomVisualizerScreen(),
           const MarketplaceScreen(),
-          const HistoryScreen(),
-          const MyHomeInventoryScreen(),
+          if (!isGuest) const HistoryScreen(),
+          if (!isGuest) const MyHomeInventoryScreen(),
           const SettingsScreen(),
           const DocumentationScreen(),
+          if (_isAdmin) const AdminScreen(),
         ];
 
-    final bool isDesktop = MediaQuery.of(context).size.width >= 900;
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: _db.getMaintenanceSettings(),
+      builder: (context, mSnapshot) {
+        final maintenance = mSnapshot.data ?? {'isEnabled': false, 'message': 'Under Maintenance'};
+        if (maintenance['isEnabled'] == true && !_isAdmin) {
+          return MaintenanceScreen(
+            message: maintenance['message'],
+            allowFeedback: maintenance['allowFeedback'] ?? true,
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      extendBody: true, 
-      bottomNavigationBar: isDesktop ? null : _buildCustomBottomNav(l10n, isContractor),
-      body: Stack(
-        children: [
-          const PremiumBackground(),
-          Column(
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          extendBody: true, 
+          bottomNavigationBar: isDesktop ? null : _buildCustomBottomNav(l10n, isContractor, isGuest),
+          body: Stack(
             children: [
-              _buildTopHeader(isContractor),
-          Expanded(
-            child: Stack(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (isDesktop)
-                    NavigationRail(
-                      backgroundColor: Theme.of(context).cardColor,
-                      elevation: 0,
-                      extended: MediaQuery.of(context).size.width > 1200,
-                      minExtendedWidth: 200,
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-                      labelType: MediaQuery.of(context).size.width > 1200 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
-                      selectedLabelTextStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF0055FF)),
-                      unselectedLabelTextStyle: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor),
-                      selectedIconTheme: const IconThemeData(color: Color(0xFF0055FF)),
-                      unselectedIconTheme: IconThemeData(color: Theme.of(context).hintColor),
-                      indicatorColor: const Color(0xFF0055FF).withOpacity(0.1),
-                      destinations: isContractor 
-                        ? [
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.dashboard_outlined),
-                              selectedIcon: const Icon(Icons.dashboard),
-                              label: Text(l10n.proDashboard),
+              const PremiumBackground(),
+              Column(
+                children: [
+                  _buildTopHeader(isContractor),
+                  StreamBuilder<Map<String, dynamic>>(
+                    stream: _db.getBannerSettings(),
+                    builder: (context, bSnapshot) {
+                      final banner = bSnapshot.data ?? {'isEnabled': false};
+                      if (banner['isEnabled'] != true) return const SizedBox.shrink();
+                      
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: InkWell(
+                            onTap: () async {
+                              if (banner['link'] != null && banner['link'].toString().isNotEmpty) {
+                                final url = Uri.parse(banner['link']);
+                                if (await canLaunchUrl(url)) await launchUrl(url);
+                              }
+                            },
+                            child: Stack(
+                              children: [
+                                if (banner['imageUrl'] != null && banner['imageUrl'].toString().isNotEmpty)
+                                  Image.network(
+                                    banner['imageUrl'],
+                                    width: double.infinity,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                  )
+                                else
+                                  Container(
+                                    height: 80,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.7)]),
+                                    ),
+                                  ),
+                                Container(
+                                  height: 80,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    banner['message'] ?? 'Check out our new update!',
+                                    style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                ),
+                              ],
                             ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.flash_on_outlined),
-                              selectedIcon: const Icon(Icons.flash_on),
-                              label: const Text('Leads'), // TODO: Add to l10n
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.payments_outlined),
-                              selectedIcon: const Icon(Icons.payments),
-                              label: const Text('Earnings'),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.history_rounded),
-                              selectedIcon: const Icon(Icons.history),
-                              label: Text(l10n.history),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.settings_outlined),
-                              selectedIcon: const Icon(Icons.settings),
-                              label: Text(l10n.settings),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.article_outlined),
-                              selectedIcon: const Icon(Icons.article),
-                              label: const Text('Docs'),
-                            ),
-                          ]
-                        : [
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.description_outlined),
-                              selectedIcon: const Icon(Icons.description),
-                              label: Text(l10n.estimates),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.auto_fix_high_outlined),
-                              selectedIcon: const Icon(Icons.auto_fix_high),
-                              label: const Text('AI Redesign'),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.group_outlined),
-                              selectedIcon: const Icon(Icons.group),
-                              label: Text(l10n.contractors),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.shopping_bag_outlined),
-                              selectedIcon: const Icon(Icons.shopping_bag),
-                              label: Text(l10n.history),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.home_work_outlined),
-                              selectedIcon: const Icon(Icons.home_work),
-                              label: const Text('My Home'),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.settings_outlined),
-                              selectedIcon: const Icon(Icons.settings),
-                              label: Text(l10n.settings),
-                            ),
-                            NavigationRailDestination(
-                              icon: const Icon(Icons.info_outline),
-                              selectedIcon: const Icon(Icons.info),
-                              label: Text(l10n.aboutRap),
+                          ),
+                        ),
+                      ).animate().slideY(begin: -1, end: 0);
+                    },
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (isDesktop)
+                              NavigationRail(
+                                backgroundColor: Theme.of(context).cardColor,
+                                elevation: 0,
+                                extended: MediaQuery.of(context).size.width > 1200,
+                                minExtendedWidth: 200,
+                                selectedIndex: _selectedIndex,
+                                onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+                                labelType: MediaQuery.of(context).size.width > 1200 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                                selectedLabelTextStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 12, color: const Color(0xFF0055FF)),
+                                unselectedLabelTextStyle: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor),
+                                selectedIconTheme: const IconThemeData(color: Color(0xFF0055FF)),
+                                unselectedIconTheme: IconThemeData(color: Theme.of(context).hintColor),
+                                indicatorColor: const Color(0xFF0055FF).withValues(alpha: 0.1),
+                                destinations: isContractor 
+                                  ? [
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.dashboard_outlined),
+                                        selectedIcon: const Icon(Icons.dashboard),
+                                        label: Text(l10n.proDashboard),
+                                      ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.flash_on_outlined),
+                                        selectedIcon: const Icon(Icons.flash_on),
+                                        label: const Text('Leads'), 
+                                      ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.payments_outlined),
+                                        selectedIcon: const Icon(Icons.payments),
+                                        label: const Text('Earnings'),
+                                      ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.history_rounded),
+                                        selectedIcon: const Icon(Icons.history),
+                                        label: Text(l10n.history),
+                                      ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.settings_outlined),
+                                        selectedIcon: const Icon(Icons.settings),
+                                        label: Text(l10n.settings),
+                                      ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.article_outlined),
+                                        selectedIcon: const Icon(Icons.article),
+                                        label: const Text('Docs'),
+                                      ),
+                                      if (_isAdmin)
+                                        const NavigationRailDestination(
+                                          icon: Icon(Icons.admin_panel_settings_outlined),
+                                          selectedIcon: Icon(Icons.admin_panel_settings),
+                                          label: Text('Admin'),
+                                        ),
+                                    ]
+                                  : [
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.description_outlined),
+                                        selectedIcon: const Icon(Icons.description),
+                                        label: Text(l10n.estimates),
+                                      ),
+                                      if (!isGuest)
+                                        NavigationRailDestination(
+                                          icon: const Icon(Icons.auto_fix_high_outlined),
+                                          selectedIcon: const Icon(Icons.auto_fix_high),
+                                          label: const Text('AI Redesign'),
+                                        ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.group_outlined),
+                                        selectedIcon: const Icon(Icons.group),
+                                        label: Text(l10n.contractors),
+                                      ),
+                                      if (!isGuest)
+                                        NavigationRailDestination(
+                                          icon: const Icon(Icons.shopping_bag_outlined),
+                                          selectedIcon: const Icon(Icons.shopping_bag),
+                                          label: Text(l10n.history),
+                                        ),
+                                      if (!isGuest)
+                                        NavigationRailDestination(
+                                          icon: const Icon(Icons.home_work_outlined),
+                                          selectedIcon: const Icon(Icons.home_work),
+                                          label: const Text('My Home'),
+                                        ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.settings_outlined),
+                                        selectedIcon: const Icon(Icons.settings),
+                                        label: Text(l10n.settings),
+                                      ),
+                                      NavigationRailDestination(
+                                        icon: const Icon(Icons.info_outline),
+                                        selectedIcon: const Icon(Icons.info),
+                                        label: Text(l10n.aboutRap),
+                                      ),
+                                      if (_isAdmin)
+                                        const NavigationRailDestination(
+                                          icon: Icon(Icons.admin_panel_settings_outlined),
+                                          selectedIcon: Icon(Icons.admin_panel_settings),
+                                          label: Text('Admin'),
+                                        ),
+                                    ],
+                              ),
+                            if (isDesktop)
+                              VerticalDivider(thickness: 1, width: 1, color: Theme.of(context).dividerColor),
+                            Expanded(
+                              child: screens.length > _selectedIndex ? screens[_selectedIndex] : screens[0],
                             ),
                           ],
-                    ),
-                    if (isDesktop)
-                      VerticalDivider(thickness: 1, width: 1, color: Theme.of(context).dividerColor),
-                    Expanded(
-                      child: screens.length > _selectedIndex ? screens[_selectedIndex] : screens[0],
-                    ),
-                  ],
-                ),
-                if (!isContractor) ...[
-                  Positioned(
-                    left: 24,
-                    bottom: isDesktop ? 24 : 100,
-                    child: FloatingActionButton.extended(
-                      onPressed: () {
-                          showDialog(
-                             context: context,
-                             barrierDismissible: false,
-                             builder: (context) => const EmergencySOSDialog(),
-                          );
-                      },
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      icon: const Icon(Icons.warning_amber_rounded).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1),
-                      label: const Text('SOS', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                    ).animate().scale(begin: const Offset(0,0), duration: 500.ms, curve: Curves.elasticOut),
-                  ),
-
-                  Positioned(
-                    right: 24,
-                    bottom: isDesktop ? 100 : 180,
-                    child: FloatingActionButton(
-                      heroTag: 'gpt',
-                      backgroundColor: Colors.black,
-                      child: const Icon(Icons.psychology_alt, color: Color(0xFF00FF9D)),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => const RapGptSheet(),
-                        );
-                      },
-                    ).animate().scale(delay: 200.ms),
-                  ),
-
-                  Positioned(
-                    right: 24,
-                    bottom: isDesktop ? 24 : 100,
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: () => setState(() => _showChat = !_showChat),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
-                            ],
-                            border: Border.all(color: const Color(0xFF0055FF).withOpacity(0.1), width: 2),
+                        ),
+                        if (!isContractor) ...[
+                          Positioned(
+                            left: 24,
+                            bottom: isDesktop ? 24 : 100,
+                            child: FloatingActionButton.extended(
+                              onPressed: () {
+                                  showDialog(
+                                     context: context,
+                                     barrierDismissible: false,
+                                     builder: (context) => const EmergencySOSDialog(),
+                                  );
+                              },
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              icon: const Icon(Icons.warning_amber_rounded).animate(onPlay: (c) => c.repeat(reverse: true)).fade(begin: 0.5, end: 1),
+                              label: const Text('SOS', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                            ).animate().scale(begin: const Offset(0,0), duration: 500.ms, curve: Curves.elasticOut),
                           ),
-                          child: ClipOval(child: Image.asset('assets/images/robot_avatar.png', fit: BoxFit.cover)),
-                        ).animate(target: _showChat ? 0 : 1).shake(hz: 0.5, curve: Curves.easeInOut).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
-                      ),
+
+                          Positioned(
+                            right: 24,
+                            bottom: isDesktop ? 100 : 180,
+                            child: FloatingActionButton(
+                              heroTag: 'gpt',
+                              backgroundColor: Colors.black,
+                              child: const Icon(Icons.psychology_alt, color: Color(0xFF00FF9D)),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => const RapGptSheet(),
+                                );
+                              },
+                            ).animate().scale(delay: 200.ms),
+                          ),
+
+                          Positioned(
+                            right: 24,
+                            bottom: isDesktop ? 24 : 100,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _showChat = !_showChat),
+                                child: Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(color: const Color(0xFF0055FF).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                                    ],
+                                    border: Border.all(color: const Color(0xFF0055FF).withValues(alpha: 0.1), width: 2),
+                                  ),
+                                  child: ClipOval(child: Image.asset('assets/images/robot_avatar.png', fit: BoxFit.cover)),
+                                ).animate(target: _showChat ? 0 : 1).shake(hz: 0.5, curve: Curves.easeInOut).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
+                              ),
+                            ),
+                          ),
+
+                          if (_showChat)
+                            Positioned(
+                              right: 24,
+                              bottom: isDesktop ? 100 : 180,
+                              child: _buildChatBotUI().animate().fadeIn().scale(alignment: Alignment.bottomRight),
+                            ),
+                        ],
+                      ],
                     ),
                   ),
-
-                  if (_showChat)
-                    Positioned(
-                      right: 24,
-                      bottom: isDesktop ? 100 : 180,
-                      child: _buildChatBotUI().animate().fadeIn().scale(alignment: Alignment.bottomRight),
-                    ),
                 ],
-              ],
-            ),
-          ),
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -379,14 +513,14 @@ class _MainScreenState extends State<MainScreen> {
       margin: const EdgeInsets.fromLTRB(24, 24, 24, 8),
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 32, vertical: isMobile ? 12 : 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.9), 
+        color: Theme.of(context).cardColor.withValues(alpha: 0.9), 
         borderRadius: BorderRadius.circular(100),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 5)),
         ],
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
       ),
-      child: ClipRRect( // Added check to prevent overflow
+      child: ClipRRect( 
         borderRadius: BorderRadius.circular(100),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -515,8 +649,8 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
-      ),
-      ),
+    ),
+    ),
     );
   }
 
@@ -524,7 +658,7 @@ class _MainScreenState extends State<MainScreen> {
     return PopupMenuItem<String>(value: code, child: Text(name, style: GoogleFonts.inter(fontSize: 13)));
   }
 
-  Widget _buildCustomBottomNav(AppLocalizations l10n, bool isContractor) {
+  Widget _buildCustomBottomNav(AppLocalizations l10n, bool isContractor, bool isGuest) {
     final items = isContractor 
       ? [
           {'icon': Icons.dashboard_outlined, 'activeIcon': Icons.dashboard, 'label': l10n.proDashboard},
@@ -532,14 +666,16 @@ class _MainScreenState extends State<MainScreen> {
           {'icon': Icons.payments_outlined, 'activeIcon': Icons.payments, 'label': 'Earnings'},
           {'icon': Icons.history_rounded, 'activeIcon': Icons.history, 'label': l10n.history},
           {'icon': Icons.settings_outlined, 'activeIcon': Icons.settings, 'label': l10n.settings},
+          if (_isAdmin) {'icon': Icons.admin_panel_settings_outlined, 'activeIcon': Icons.admin_panel_settings, 'label': 'Admin'},
       ]
       : [
           {'icon': Icons.description_outlined, 'activeIcon': Icons.description, 'label': l10n.estimates},
-          {'icon': Icons.auto_fix_high_outlined, 'activeIcon': Icons.auto_fix_high, 'label': 'AI Redesign'},
+          if (!isGuest) {'icon': Icons.auto_fix_high_outlined, 'activeIcon': Icons.auto_fix_high, 'label': 'AI Redesign'},
           {'icon': Icons.group_outlined, 'activeIcon': Icons.group, 'label': l10n.contractors},
-          {'icon': Icons.shopping_bag_outlined, 'activeIcon': Icons.shopping_bag, 'label': l10n.history},
-          {'icon': Icons.home_work_outlined, 'activeIcon': Icons.home_work, 'label': 'My Home'},
+          if (!isGuest) {'icon': Icons.shopping_bag_outlined, 'activeIcon': Icons.shopping_bag, 'label': l10n.history},
+          if (!isGuest) {'icon': Icons.home_work_outlined, 'activeIcon': Icons.home_work, 'label': 'My Home'},
           {'icon': Icons.settings_outlined, 'activeIcon': Icons.settings, 'label': l10n.settings},
+          if (_isAdmin) {'icon': Icons.admin_panel_settings_outlined, 'activeIcon': Icons.admin_panel_settings, 'label': 'Admin'},
       ];
 
     return Container(
@@ -549,8 +685,8 @@ class _MainScreenState extends State<MainScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Theme.of(context).scaffoldBackgroundColor.withOpacity(0.0),
-                Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.0),
+                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
                 Theme.of(context).scaffoldBackgroundColor,
               ],
               stops: const [0.0, 0.3, 1.0],
@@ -559,12 +695,12 @@ class _MainScreenState extends State<MainScreen> {
       child: Container(
         height: 70,
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor.withOpacity(0.9),
+          color: Theme.of(context).cardColor.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(35),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 10)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 30, offset: const Offset(0, 10)),
           ],
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -577,7 +713,7 @@ class _MainScreenState extends State<MainScreen> {
                 duration: const Duration(milliseconds: 300),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF0055FF).withOpacity(0.1) : Colors.transparent,
+                  color: isSelected ? const Color(0xFF0055FF).withValues(alpha: 0.1) : Colors.transparent,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
@@ -618,7 +754,7 @@ class _MainScreenState extends State<MainScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF0055FF).withOpacity(0.15), blurRadius: 60, offset: const Offset(0, 20)),
+          BoxShadow(color: const Color(0xFF0055FF).withValues(alpha: 0.15), blurRadius: 60, offset: const Offset(0, 20)),
         ],
         border: Border.all(color: Theme.of(context).dividerColor, width: 2),
       ),
@@ -644,7 +780,7 @@ class _MainScreenState extends State<MainScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(l10n.rapBot, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('Online • AI Powered', style: GoogleFonts.inter(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                        Text('Online • AI Powered', style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
                       ],
                     ),
                   ),

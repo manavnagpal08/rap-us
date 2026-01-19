@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:rap_app/l10n/app_localizations.dart';
 import 'package:rap_app/screens/main_screen.dart';
 import 'package:rap_app/screens/contractor_register_screen.dart';
+import 'package:rap_app/screens/legal_screen.dart';
 import 'package:rap_app/services/auth_service.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:image_picker/image_picker.dart';
@@ -26,7 +27,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordVisible = false;
   bool _isContractor = false;
   File? _selectedImage;
+
   String? _base64Image;
+  bool _acceptedTerms = false;
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -50,6 +53,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_nameController.text.trim().isEmpty || _emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.fillAllFields)));
+      return;
+    }
+    
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms & Conditions and Privacy Policy to continue.'), backgroundColor: AppTheme.error));
       return;
     }
     setState(() => _isLoading = true);
@@ -103,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: 400, height: 400,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                         ),
                       ),
                     ),
@@ -113,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         width: 300, height: 300,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                         ),
                       ),
                     ),
@@ -124,11 +132,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Container(
                             padding: const EdgeInsets.all(32),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 10)),
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 30, offset: const Offset(0, 10)),
                               ],
                             ),
                             child: const Icon(Icons.rocket_launch_rounded, color: Colors.white, size: 80),
@@ -202,8 +210,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 width: 120, height: 120,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Theme.of(context).dividerColor.withOpacity(0.1),
-                                  border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.2)),
+                                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                                  border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.2)),
                                   image: _selectedImage != null 
                                     ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
                                     : null,
@@ -279,6 +287,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
                       const SizedBox(height: 32),
                       
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _acceptedTerms,
+                              onChanged: (val) => setState(() => _acceptedTerms = val ?? false),
+                              activeColor: Theme.of(context).colorScheme.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Wrap(
+                              children: [
+                                Text('I agree to the ', style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 13)),
+                                GestureDetector(
+                                  onTap: () => LegalScreen.show(context, title: 'Terms & Conditions', type: 'terms_conditions'),
+                                  child: Text('Terms & Conditions', style: GoogleFonts.inter(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                                ),
+                                Text(' and ', style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 13)),
+                                GestureDetector(
+                                  onTap: () => LegalScreen.show(context, title: 'Privacy Policy', type: 'privacy_policy'),
+                                  child: Text('Privacy Policy', style: GoogleFonts.inter(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                                ),
+                                Text('.', style: GoogleFonts.inter(color: Theme.of(context).hintColor, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ).animate().fadeIn(delay: 750.ms),
+                      const SizedBox(height: 32),
+                      
                       // Sign Up Button
                       Container(
                         width: double.infinity,
@@ -286,7 +330,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                             BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                             BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
                           ],
                         ),
                         child: ElevatedButton(
@@ -301,9 +345,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : Text(l10n.signUp, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
                         ),
                       ).animate().fadeIn(delay: 800.ms).scale(),
-                      
+
                       const SizedBox(height: 32),
-                      
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -340,11 +383,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
+          color: Colors.transparent, // Removed background color for image
+          borderRadius: BorderRadius.circular(12),
         ),
+        child: Image.asset('assets/images/logo.png', width: 50, height: 50),
+      ),
         const SizedBox(width: 12),
         Text(
           'RAP',
@@ -400,7 +443,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor,
             ),
             boxShadow: isSelected ? [
-              BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))
+              BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))
             ] : null,
           ),
           child: Row(

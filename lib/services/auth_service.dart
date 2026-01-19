@@ -55,34 +55,68 @@ class AuthService {
   // Login with Email & Password
   Future<UserCredential?> login(String email, String password) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final userCred = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      
+      // Check for ban
+      final profile = await _db.getUserProfile(userCred.user!.uid);
+      if (profile != null && profile['isBlocked'] == true) {
+        await signOut();
+        throw 'Your account has been suspended by an administrator.';
+      }
+      return userCred;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthError(e);
+    } catch (e) {
+      // Re-throw if it's our custom suspended message
+      if (e is String) rethrow;
+      throw 'Login failed: $e';
     }
   }
 
   // Google Sign-In (Optional)
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      UserCredential? credential;
       if (kIsWeb) {
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        return await _auth.signInWithPopup(googleProvider);
+        credential = await _auth.signInWithPopup(googleProvider);
       } else {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser == null) return null;
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final OAuthCredential credential = GoogleAuthProvider.credential(
+        final OAuthCredential cred = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        return await _auth.signInWithCredential(credential);
+        credential = await _auth.signInWithCredential(cred);
       }
+      
+      // Check for ban
+      if (credential.user != null) {
+        final profile = await _db.getUserProfile(credential.user!.uid);
+        if (profile != null && profile['isBlocked'] == true) {
+          await signOut();
+          throw 'Your account has been suspended by an administrator.';
+        }
+        
+        // Ensure profile exists for Google Sign In users who might be new
+        if (profile == null) {
+           await _db.createUserProfile(credential.user!.uid, {
+            'fullName': credential.user?.displayName ?? 'User',
+            'email': credential.user?.email,
+            'role': 'user', // Default role
+          });
+        }
+      }
+      
+      return credential;
     } catch (e) {
+       if (e is String && e.contains('suspended')) rethrow;
       throw 'Google Sign-In failed: $e';
     }
   }

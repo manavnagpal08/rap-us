@@ -156,7 +156,7 @@ class _DigitalHandshakeScreenState extends State<DigitalHandshakeScreen> with Si
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFF00E5FF).withOpacity(0.3), blurRadius: 40, offset: const Offset(0, 10))
+                  BoxShadow(color: const Color(0xFF00E5FF).withValues(alpha: 0.3), blurRadius: 40, offset: const Offset(0, 10))
                 ],
               ),
               child: QrImageView(

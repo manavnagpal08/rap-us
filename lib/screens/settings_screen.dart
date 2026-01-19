@@ -1,6 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +12,8 @@ import 'package:rap_app/screens/security_screen.dart';
 import 'package:rap_app/screens/support_screen.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/widgets/premium_background.dart';
+import 'package:rap_app/screens/legal_screen.dart';
+import 'package:rap_app/screens/admin_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,11 +26,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final AuthService _auth = AuthService();
   final DatabaseService _db = DatabaseService();
   bool _notificationsEnabled = true;
-  String _currency = 'USD';
-  
+
   // Profile State
   Map<String, dynamic>? _userProfile;
   bool _isLoading = true;
+
+  bool get _isAdmin {
+    final email = _auth.currentUser?.email;
+    if (email == 'kaaysha.rao@gmail.com' ||
+        email == 'admin@rap.com' ||
+        email == 'manav.nagpal2005@gmail.com')
+      return true;
+    return _userProfile?['role'] == 'admin';
+  }
 
   @override
   void initState() {
@@ -57,21 +66,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       imageQuality: 50,
       maxWidth: 800,
     );
-    
+
     if (image != null && _auth.currentUser != null) {
       final bytes = await image.readAsBytes();
       final base64String = base64Encode(bytes);
-      
+
       setState(() => _isLoading = true);
       try {
-        await _db.updateUserProfile(_auth.currentUser!.uid, {'photoBase64': base64String});
+        await _db.updateUserProfile(_auth.currentUser!.uid, {
+          'photoBase64': base64String,
+        });
         await _loadProfile(); // Refresh
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile picture updated!'), backgroundColor: AppTheme.success));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated!'),
+              backgroundColor: AppTheme.success,
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update image: $e'), backgroundColor: AppTheme.error));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update image: $e'),
+              backgroundColor: AppTheme.error,
+            ),
+          );
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -83,16 +104,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final user = _auth.currentUser;
     final l10n = AppLocalizations.of(context)!;
-    
+
     // Fallback values
-    final displayName = user?.displayName ?? _userProfile?['fullName'] ?? 'Guest User';
+    final displayName =
+        user?.displayName ?? _userProfile?['fullName'] ?? 'Guest User';
     final email = user?.email ?? _userProfile?['email'] ?? 'No email linked';
     final photoBase64 = _userProfile?['photoBase64'];
     final referralCode = _userProfile?['referralCode'] ?? 'NOT GENERATED';
     final loyaltyPoints = _userProfile?['loyaltyPoints'] ?? 0;
-    
+
     // Auto-generate code if missing
-    if (_userProfile != null && _userProfile!['referralCode'] == null && user != null && !_isLoading) {
+    if (_userProfile != null &&
+        _userProfile!['referralCode'] == null &&
+        user != null &&
+        !_isLoading) {
       _db.generateReferralCode(user.uid).then((_) => _loadProfile());
     }
 
@@ -105,7 +130,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             slivers: [
               SliverAppBar(
                 backgroundColor: Colors.transparent,
-                title: Text(l10n.settings, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                title: Text(
+                  l10n.settings,
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                ),
                 centerTitle: true,
                 floating: true,
                 elevation: 0,
@@ -114,11 +142,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    
                     // --- Profile Card ---
                     Container(
                       padding: const EdgeInsets.all(24),
-                      decoration: AppTheme.glassDecoration(color: Theme.of(context).cardColor.withOpacity(0.85)),
+                      decoration: AppTheme.glassDecoration(
+                        color: Theme.of(context).cardColor.withValues(alpha: 0.85),
+                      ),
                       child: Column(
                         children: [
                           Stack(
@@ -128,28 +157,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppTheme.accent, width: 3),
+                                    border: Border.all(
+                                      color: AppTheme.accent,
+                                      width: 3,
+                                    ),
                                     boxShadow: [
-                                      BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 5))
+                                      BoxShadow(
+                                        color: AppTheme.accent.withValues(alpha: 0.3),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 5),
+                                      ),
                                     ],
                                   ),
                                   child: CircleAvatar(
                                     radius: 50,
-                                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                                    backgroundImage: photoBase64 != null 
-                                      ? MemoryImage(base64Decode(photoBase64))
-                                      : null,
-                                    child: photoBase64 == null 
-                                      ? Text(
-                                          displayName.substring(0, 1).toUpperCase(),
-                                          style: GoogleFonts.outfit(fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.accent),
-                                        ) 
-                                      : null,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).scaffoldBackgroundColor,
+                                    backgroundImage: photoBase64 != null
+                                        ? MemoryImage(base64Decode(photoBase64))
+                                        : null,
+                                    child: photoBase64 == null
+                                        ? Text(
+                                            displayName
+                                                .substring(0, 1)
+                                                .toUpperCase(),
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 40,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.accent,
+                                            ),
+                                          )
+                                        : null,
                                   ),
                                 ),
                               ),
                               Positioned(
-                                bottom: 0, right: 0,
+                                bottom: 0,
+                                right: 0,
                                 child: GestureDetector(
                                   onTap: _updateProfileImage,
                                   child: Container(
@@ -157,39 +202,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     decoration: BoxDecoration(
                                       color: AppTheme.accent,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
                                     ),
-                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
-                          ).animate().scale(curve: Curves.elasticOut, duration: 800.ms),
+                          ).animate().scale(
+                            curve: Curves.elasticOut,
+                            duration: 800.ms,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             displayName,
-                            style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                            style: GoogleFonts.outfit(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
                           Text(
                             email,
-                            style: GoogleFonts.inter(fontSize: 14, color: Theme.of(context).hintColor),
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: Theme.of(context).hintColor,
+                            ),
                           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
                           const SizedBox(height: 16),
                           OutlinedButton.icon(
-                            onPressed: () => _showEditProfileDialog(context, user),
+                            onPressed: () =>
+                                _showEditProfileDialog(context, user),
                             icon: const Icon(Icons.edit_outlined, size: 16),
                             label: const Text('Edit Profile'),
                             style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
                           ).animate().fadeIn(delay: 400.ms),
                         ],
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // --- Preferences ---
-                    _buildSectionHeader(context, l10n.preferences).animate().fadeIn(delay: 500.ms),
+                    _buildSectionHeader(
+                      context,
+                      l10n.preferences,
+                    ).animate().fadeIn(delay: 500.ms),
                     _buildSettingsGroup(context, [
                       _buildSettingTile(
                         context,
@@ -198,7 +266,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         subtitle: 'Enable push alerts for new projects',
                         trailing: Switch.adaptive(
                           value: _notificationsEnabled,
-                          onChanged: (v) => setState(() => _notificationsEnabled = v),
+                          onChanged: (v) =>
+                              setState(() => _notificationsEnabled = v),
                           activeColor: AppTheme.accent,
                         ),
                       ),
@@ -211,7 +280,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           valueListenable: AppTheme.themeModeNotifier,
                           builder: (context, mode, _) => Switch.adaptive(
                             value: mode == ThemeMode.dark,
-                            onChanged: (v) => AppTheme.themeModeNotifier.value = v ? ThemeMode.dark : ThemeMode.light,
+                            onChanged: (v) => AppTheme.themeModeNotifier.value =
+                                v ? ThemeMode.dark : ThemeMode.light,
                             activeColor: AppTheme.accent,
                           ),
                         ),
@@ -226,39 +296,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             value: AppTheme.localeNotifier.value.languageCode,
                             dropdownColor: Theme.of(context).cardColor,
                             icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                            style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600),
+                            style: GoogleFonts.inter(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
                             onChanged: (v) {
-                              if (v != null) setState(() => AppTheme.localeNotifier.value = Locale(v));
+                              if (v != null)
+                                setState(
+                                  () =>
+                                      AppTheme.localeNotifier.value = Locale(v),
+                                );
                             },
-                            items: [
-                              {'code': 'en', 'name': 'English'},
-                              {'code': 'es', 'name': 'Español'},
-                              {'code': 'hi', 'name': 'हिन्दी'},
-                              {'code': 'fr', 'name': 'Français'},
-                              {'code': 'de', 'name': 'Deutsch'},
-                            ].map((e) => DropdownMenuItem(value: e['code'], child: Text(e['name']!))).toList(),
+                            items:
+                                [
+                                      {'code': 'en', 'name': 'English'},
+                                      {'code': 'es', 'name': 'Español'},
+                                      {'code': 'hi', 'name': 'हिन्दी'},
+                                      {'code': 'fr', 'name': 'Français'},
+                                      {'code': 'de', 'name': 'Deutsch'},
+                                    ]
+                                    .map(
+                                      (e) => DropdownMenuItem(
+                                        value: e['code'],
+                                        child: Text(e['name']!),
+                                      ),
+                                    )
+                                    .toList(),
                           ),
                         ),
                       ),
                     ]).animate().fadeIn(delay: 600.ms).slideX(),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // --- Rewards & Points ---
-                    _buildSectionHeader(context, 'Rewards').animate().fadeIn(delay: 700.ms),
+                    _buildSectionHeader(
+                      context,
+                      'Rewards',
+                    ).animate().fadeIn(delay: 700.ms),
                     Container(
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
                         gradient: AppTheme.accentGradient,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: AppTheme.accent.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 10)),
+                          BoxShadow(
+                            color: AppTheme.accent.withValues(alpha: 0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
                         ],
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () => _showRedemptionDialog(context, loyaltyPoints, user?.uid ?? ''),
+                          onTap: () => _showRedemptionDialog(
+                            context,
+                            loyaltyPoints,
+                            user?.uid ?? '',
+                          ),
                           borderRadius: BorderRadius.circular(24),
                           child: Padding(
                             padding: const EdgeInsets.all(24),
@@ -266,20 +362,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                                  child: const Icon(Icons.stars_rounded, color: Colors.white, size: 32),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.stars_rounded,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text('$loyaltyPoints Points', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                                      Text('Redeem for discounts & gifts', style: GoogleFonts.inter(color: Colors.white.withOpacity(0.9), fontSize: 13)),
+                                      Text(
+                                        '$loyaltyPoints Points',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Redeem for discounts & gifts',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white.withValues(alpha: 0.9),
+                                          fontSize: 13,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+                                const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ),
@@ -294,8 +415,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'Refer & Earn',
                         subtitle: 'Your Code: $referralCode',
                         onTap: () {
-                           // ignore: deprecated_member_use
-                           Share.share('Use my RAP code $referralCode for a discount on your next project!');
+                          // ignore: deprecated_member_use
+                          Share.share(
+                            'Use my RAP code $referralCode for a discount on your next project!',
+                          );
                         },
                       ),
                       _buildSettingTile(
@@ -306,25 +429,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onTap: () => _showReferralInputDialog(context),
                       ),
                     ]).animate().fadeIn(delay: 900.ms).slideX(),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // --- Account ---
-                    _buildSectionHeader(context, l10n.account).animate().fadeIn(delay: 1000.ms),
+                    _buildSectionHeader(
+                      context,
+                      l10n.account,
+                    ).animate().fadeIn(delay: 1000.ms),
                     _buildSettingsGroup(context, [
+                      if (_isAdmin)
+                        _buildSettingTile(
+                          context,
+                          icon: Icons.admin_panel_settings_rounded,
+                          title: 'Admin Dashboard',
+                          subtitle: 'Manage users, content & system',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AdminScreen(),
+                            ),
+                          ),
+                        ),
                       _buildSettingTile(
                         context,
                         icon: Icons.security_rounded,
                         title: l10n.security,
                         subtitle: '2FA, Password & Biometrics',
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecurityScreen())),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SecurityScreen(),
+                          ),
+                        ),
                       ),
                       _buildSettingTile(
                         context,
                         icon: Icons.help_outline_rounded,
                         title: 'Help & Support',
                         subtitle: 'FAQs and Customer Service',
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportScreen())),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SupportScreen(),
+                          ),
+                        ),
                       ),
                       _buildSettingTile(
                         context,
@@ -337,14 +483,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             builder: (ctx) => AboutDialog(
                               applicationName: l10n.appTitle,
                               applicationVersion: '1.0.0',
-                              applicationIcon: Icon(Icons.auto_awesome_rounded, color: AppTheme.accent, size: 40),
-                              children: [Text(l10n.aboutDescription, style: GoogleFonts.inter())],
+                              applicationIcon: Icon(
+                                Icons.auto_awesome_rounded,
+                                color: AppTheme.accent,
+                                size: 40,
+                              ),
+                              children: [
+                                Text(
+                                  l10n.aboutDescription,
+                                  style: GoogleFonts.inter(),
+                                ),
+                              ],
                             ),
                           );
                         },
                       ),
+                      _buildSettingTile(
+                        context,
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Privacy Policy',
+                        subtitle: 'Data usage & protection',
+                        onTap: () => LegalScreen.show(
+                          context,
+                          title: 'Privacy Policy',
+                          type: 'privacy_policy',
+                        ),
+                      ),
+                      _buildSettingTile(
+                        context,
+                        icon: Icons.description_outlined,
+                        title: 'Terms & Conditions',
+                        subtitle: 'User agreement',
+                        onTap: () => LegalScreen.show(
+                          context,
+                          title: 'Terms & Conditions',
+                          type: 'terms_conditions',
+                        ),
+                      ),
                     ]).animate().fadeIn(delay: 1100.ms).slideX(),
-                    
+
                     const SizedBox(height: 48),
 
                     // --- Sign Out & Danger ---
@@ -354,7 +531,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: ElevatedButton.icon(
                         onPressed: () async {
                           await _auth.signOut();
-                          if (context.mounted) Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                          if (context.mounted)
+                            Navigator.of(
+                              context,
+                            ).pushNamedAndRemoveUntil('/', (route) => false);
                         },
                         icon: const Icon(Icons.logout_rounded),
                         label: const Text('Sign Out'),
@@ -362,20 +542,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           backgroundColor: Theme.of(context).cardColor,
                           foregroundColor: Theme.of(context).colorScheme.error,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          side: BorderSide(color: Theme.of(context).colorScheme.error.withOpacity(0.2)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          side: BorderSide(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.error.withValues(alpha: 0.2),
+                          ),
                         ),
                       ),
                     ).animate().fadeIn(delay: 1200.ms),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     Center(
                       child: TextButton(
                         onPressed: _showDeleteAccountDialog,
                         child: Text(
                           'Delete Account',
-                          style: GoogleFonts.inter(color: Colors.red.withOpacity(0.6), fontWeight: FontWeight.w600, fontSize: 13),
+                          style: GoogleFonts.inter(
+                            color: Colors.red.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ).animate().fadeIn(delay: 1300.ms),
@@ -398,7 +588,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontSize: 12,
           fontWeight: FontWeight.w900,
           letterSpacing: 1.5,
-          color: Theme.of(context).hintColor.withOpacity(0.7),
+          color: Theme.of(context).hintColor.withValues(alpha: 0.7),
         ),
       ),
     );
@@ -406,7 +596,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSettingsGroup(BuildContext context, List<Widget> children) {
     return Container(
-      decoration: AppTheme.glassDecoration(color: Theme.of(context).cardColor.withOpacity(0.6)),
+      decoration: AppTheme.glassDecoration(
+        color: Theme.of(context).cardColor.withValues(alpha: 0.6),
+      ),
       child: Column(children: children),
     );
   }
@@ -432,27 +624,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
+                child: Icon(
+                  icon,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                     if (subtitle.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Theme.of(context).hintColor)),
+                        child: Text(
+                          subtitle,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Theme.of(context).hintColor,
+                          ),
+                        ),
                       ),
                   ],
                 ),
               ),
-              if (trailing != null) trailing
-              else Icon(Icons.chevron_right_rounded, color: Theme.of(context).dividerColor.withOpacity(0.5)),
+              if (trailing != null)
+                trailing
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                ),
             ],
           ),
         ),
@@ -462,8 +678,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showEditProfileDialog(BuildContext context, user) {
     if (user == null) return;
-    final nameController = TextEditingController(text: user.displayName ?? _userProfile?['fullName']);
-    
+    final nameController = TextEditingController(
+      text: user.displayName ?? _userProfile?['fullName'],
+    );
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -480,20 +698,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () async {
               setState(() => _isLoading = true);
               try {
                 await user.updateDisplayName(nameController.text.trim());
-                await _db.updateUserProfile(user.uid, {'fullName': nameController.text.trim()});
+                await _db.updateUserProfile(user.uid, {
+                  'fullName': nameController.text.trim(),
+                });
                 await _loadProfile();
               } finally {
                 setState(() => _isLoading = false);
               }
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Save'),
           ),
         ],
@@ -521,20 +747,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () async {
-              final success = await _db.applyReferral(codeController.text.trim().toUpperCase());
+              final success = await _db.applyReferral(
+                codeController.text.trim().toUpperCase(),
+              );
               if (ctx.mounted) Navigator.pop(ctx);
               if (context.mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(success ? 'Code applied! Points added.' : 'Invalid or expired code.'),
-                    backgroundColor: success ? AppTheme.success : AppTheme.error,
-                 ));
-                 if (success) _loadProfile();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Code applied! Points added.'
+                          : 'Invalid or expired code.',
+                    ),
+                    backgroundColor: success
+                        ? AppTheme.success
+                        : AppTheme.error,
+                  ),
+                );
+                if (success) _loadProfile();
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Apply'),
           ),
         ],
@@ -542,11 +784,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showRedemptionDialog(BuildContext context, int currentPoints, String uid) {
+  void _showRedemptionDialog(
+    BuildContext context,
+    int currentPoints,
+    String uid,
+  ) {
     final rewards = [
-      {'name': '\$5 Amazon Gift Card', 'points': 500, 'type': 'amazon', 'icon': Icons.card_giftcard},
-      {'name': '10% Service Discount', 'points': 800, 'type': 'service_discount', 'icon': Icons.local_offer},
-      {'name': '\$20 RAP Credit', 'points': 1500, 'type': 'credit', 'icon': Icons.account_balance_wallet},
+      {
+        'name': '\$5 Amazon Gift Card',
+        'points': 500,
+        'type': 'amazon',
+        'icon': Icons.card_giftcard,
+      },
+      {
+        'name': '10% Service Discount',
+        'points': 800,
+        'type': 'service_discount',
+        'icon': Icons.local_offer,
+      },
+      {
+        'name': '\$20 RAP Credit',
+        'points': 1500,
+        'type': 'credit',
+        'icon': Icons.account_balance_wallet,
+      },
     ];
 
     showModalBottomSheet(
@@ -562,17 +823,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).dividerColor, borderRadius: BorderRadius.circular(2)))),
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             Row(
               children: [
                 Icon(Icons.stars_rounded, color: AppTheme.accent, size: 32),
                 const SizedBox(width: 12),
-                Text('Redeem Rewards', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+                Text(
+                  'Redeem Rewards',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            Text('You have $currentPoints points available.', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
+            Text(
+              'You have $currentPoints points available.',
+              style: GoogleFonts.inter(color: Theme.of(context).hintColor),
+            ),
             const SizedBox(height: 24),
             ...rewards.map((r) {
               final cost = r['points'] as int;
@@ -583,42 +863,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: canAfford ? AppTheme.accent.withOpacity(0.3) : Colors.transparent),
+                  border: Border.all(
+                    color: canAfford
+                        ? AppTheme.accent.withValues(alpha: 0.3)
+                        : Colors.transparent,
+                  ),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: AppTheme.accent.withOpacity(0.1), shape: BoxShape.circle),
-                      child: Icon(r['icon'] as IconData, color: AppTheme.accent),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accent.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        r['icon'] as IconData,
+                        color: AppTheme.accent,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(r['name'] as String, style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
-                          Text('$cost Points', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                          Text(
+                            r['name'] as String,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            '$cost Points',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: canAfford ? () async {
-                         Navigator.pop(ctx);
-                         final result = await _db.redeemPoints(uid, cost, r['type'] as String);
-                         if (context.mounted) {
-                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                             content: Text(result['message']),
-                             backgroundColor: result['success'] ? AppTheme.success : AppTheme.error,
-                           ));
-                           if (result['success']) _loadProfile();
-                         }
-                      } : null,
+                      onPressed: canAfford
+                          ? () async {
+                              Navigator.pop(ctx);
+                              final result = await _db.redeemPoints(
+                                uid,
+                                cost,
+                                r['type'] as String,
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(result['message']),
+                                    backgroundColor: result['success']
+                                        ? AppTheme.success
+                                        : AppTheme.error,
+                                  ),
+                                );
+                                if (result['success']) _loadProfile();
+                              }
+                            }
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.accent,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: Theme.of(context).dividerColor.withOpacity(0.2),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        disabledBackgroundColor: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: const Text('Get'),
                     ),
@@ -632,28 +948,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  
+
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Account'),
-        content: const Text('Are you sure you want to delete your account? This action cannot be undone and all data will be lost.'),
+        content: const Text(
+          'Are you sure you want to delete your account? This action cannot be undone and all data will be lost.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           TextButton(
-             onPressed: () async {
-               // Implement delete logic here if backend supports it
-               // For now just sign out
-               Navigator.pop(ctx);
-               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please contact support to delete your account permanently.')));
-             }, 
-             style: TextButton.styleFrom(foregroundColor: Colors.red),
-             child: const Text('Delete')
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Implement delete logic here if backend supports it
+              // For now just sign out
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Please contact support to delete your account permanently.',
+                  ),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
   }
 }
-

@@ -50,8 +50,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 200,
-                height: 200,
+                width: 300,
+                height: 300,
                 padding: const EdgeInsets.all(24),
                 child: Image.asset('assets/images/logo.png'),
               ),

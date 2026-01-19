@@ -48,11 +48,11 @@ class _RapGptSheetState extends State<RapGptSheet> {
         child: Container(
           height: MediaQuery.of(context).size.height * 0.75, // 75% Height
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.85),
-            border: Border.all(color: const Color(0xFF00FF9D).withOpacity(0.2)),
+            color: Colors.black.withValues(alpha: 0.85),
+            border: Border.all(color: const Color(0xFF00FF9D).withValues(alpha: 0.2)),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
-              BoxShadow(color: const Color(0xFF00FF9D).withOpacity(0.1), blurRadius: 40, spreadRadius: 5),
+              BoxShadow(color: const Color(0xFF00FF9D).withValues(alpha: 0.1), blurRadius: 40, spreadRadius: 5),
             ],
           ),
           child: Column(
@@ -92,7 +92,7 @@ class _RapGptSheetState extends State<RapGptSheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.terminal, size: 64, color: const Color(0xFF00FF9D).withOpacity(0.2)),
+                          Icon(Icons.terminal, size: 64, color: const Color(0xFF00FF9D).withValues(alpha: 0.2)),
                           const SizedBox(height: 16),
                           Text('Ready to assist.', style: GoogleFonts.inter(color: Colors.grey[500])),
                         ],
@@ -110,12 +110,12 @@ class _RapGptSheetState extends State<RapGptSheet> {
                             padding: const EdgeInsets.all(16),
                             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
                             decoration: BoxDecoration(
-                              color: isUser ? const Color(0xFF00FF9D).withOpacity(0.1) : const Color(0xFF1E1E1E),
+                              color: isUser ? const Color(0xFF00FF9D).withValues(alpha: 0.1) : const Color(0xFF1E1E1E),
                               borderRadius: BorderRadius.circular(16).copyWith(
                                 bottomRight: isUser ? Radius.zero : null,
                                 bottomLeft: !isUser ? Radius.zero : null,
                               ),
-                              border: Border.all(color: isUser ? const Color(0xFF00FF9D).withOpacity(0.3) : const Color(0xFF333333)),
+                              border: Border.all(color: isUser ? const Color(0xFF00FF9D).withValues(alpha: 0.3) : const Color(0xFF333333)),
                             ),
                             child: isUser 
                               ? Text(_messages[index]['text']!, style: GoogleFonts.inter(color: Colors.white))

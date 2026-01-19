@@ -173,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 400, height: 400,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                         ),
                       ),
                     ),
@@ -184,11 +184,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(32),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 10)),
+                                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 30, offset: const Offset(0, 10)),
                               ],
                             ),
                             child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 80),
@@ -305,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                             BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                             BoxShadow(color: Theme.of(context).primaryColor.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
                           ],
                         ),
                         child: ElevatedButton(
@@ -409,11 +409,11 @@ class _LoginScreenState extends State<LoginScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
+          color: Colors.transparent, // Removed background color for image
+          borderRadius: BorderRadius.circular(12),
         ),
+        child: Image.asset('assets/images/logo.png', width: 50, height: 50),
+      ),
         const SizedBox(width: 12),
         Text(
           'RAP',

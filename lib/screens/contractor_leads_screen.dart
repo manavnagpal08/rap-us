@@ -19,8 +19,6 @@ class _ContractorLeadsScreenState extends State<ContractorLeadsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -31,18 +29,35 @@ class _ContractorLeadsScreenState extends State<ContractorLeadsScreen> {
           }
 
           final allJobs = snapshot.data ?? [];
-          final leads = allJobs.where((j) => j['status'] == 'pending' || j['status'] == 'new').toList();
+          final leads = allJobs
+              .where((j) => j['status'] == 'pending' || j['status'] == 'new')
+              .toList();
 
           if (leads.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.flash_off_rounded, size: 64, color: Theme.of(context).hintColor.withOpacity(0.2)),
+                  Icon(
+                    Icons.flash_off_rounded,
+                    size: 64,
+                    color: Theme.of(context).hintColor.withValues(alpha: 0.2),
+                  ),
                   const SizedBox(height: 16),
-                  Text('No new leads at the moment', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
+                  Text(
+                    'No new leads at the moment',
+                    style: GoogleFonts.inter(
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Check back later for new opportunities!', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor.withOpacity(0.6))),
+                  Text(
+                    'Check back later for new opportunities!',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Theme.of(context).hintColor.withValues(alpha: 0.6),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -68,9 +83,13 @@ class _ContractorLeadsScreenState extends State<ContractorLeadsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.accent.withOpacity(0.1)),
+        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.1)),
         boxShadow: [
-          BoxShadow(color: AppTheme.accent.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: AppTheme.accent.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
@@ -83,47 +102,78 @@ class _ContractorLeadsScreenState extends State<ContractorLeadsScreen> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppTheme.accent.withOpacity(0.1),
+                    color: AppTheme.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.flash_on_rounded, color: AppTheme.accent),
+                  child: const Icon(
+                    Icons.flash_on_rounded,
+                    color: AppTheme.accent,
+                  ),
                 ),
                 const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(lead['title'] ?? 'New Request', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(
+                        lead['title'] ?? 'New Request',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.location_on_outlined, size: 14, color: Theme.of(context).hintColor),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: Theme.of(context).hintColor,
+                          ),
                           const SizedBox(width: 4),
-                          Text(lead['location'] ?? 'Unknown Location', style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor)),
+                          Text(
+                            lead['location'] ?? 'Unknown Location',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                Text('\$${lead['amount']}', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.accent)),
+                Text(
+                  '\$${lead['amount']}',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.accent,
+                  ),
+                ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).dividerColor.withOpacity(0.02),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.02),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(24),
+              ),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => _db.updateContractorJobStatus(lead['id'], 'rejected'),
+                    onPressed: () =>
+                        _db.updateContractorJobStatus(lead['id'], 'rejected'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.error,
-                      side: BorderSide(color: AppTheme.error.withOpacity(0.2)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(color: AppTheme.error.withValues(alpha: 0.2)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text(l10n.reject),
                   ),
@@ -131,11 +181,16 @@ class _ContractorLeadsScreenState extends State<ContractorLeadsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _db.updateContractorJobStatus(lead['id'], 'in_progress'),
+                    onPressed: () => _db.updateContractorJobStatus(
+                      lead['id'],
+                      'in_progress',
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.success,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text(l10n.accept),
                   ),

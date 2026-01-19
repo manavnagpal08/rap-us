@@ -372,17 +372,65 @@ class _ContractorDashboardState extends State<ContractorDashboard> {
              borderRadius: BorderRadius.circular(24),
              border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
           ),
-          child: Column(
-            children: [
-              _feedItem(context, 'New lead in Austin', '2 mins ago', Icons.flash_on_rounded, AppTheme.accent),
-              const Divider(height: 32),
-              _feedItem(context, 'Payment released', '1 hour ago', Icons.attach_money_rounded, AppTheme.success),
-              const Divider(height: 32),
-            ],
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _db.getNotifications(_auth.currentUser!.uid),
+            builder: (context, snapshot) {
+              final notifications = snapshot.data ?? [];
+              
+              if (notifications.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.notifications_none_rounded, color: Theme.of(context).hintColor.withValues(alpha: 0.5), size: 40),
+                        const SizedBox(height: 12),
+                        Text('No recent activity', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: notifications.take(5).map((n) {
+                  return Column(
+                    children: [
+                      _feedItem(
+                        context, 
+                        n['title'] ?? 'Notification', 
+                        n['time'] ?? 'Just now', 
+                        _getIconForType(n['type']), 
+                        _getColorForType(n['type']),
+                      ),
+                      const Divider(height: 32),
+                    ],
+                  );
+                }).toList(),
+              );
+            }
           ),
         ),
       ],
     );
+  }
+
+  IconData _getIconForType(String? type) {
+    switch (type) {
+      case 'lead': return Icons.flash_on_rounded;
+      case 'payment': return Icons.attach_money_rounded;
+      case 'job': return Icons.work_outline_rounded;
+      default: return Icons.notifications_rounded;
+    }
+  }
+
+  Color _getColorForType(String? type) {
+    switch (type) {
+      case 'lead': return AppTheme.accent;
+      case 'payment': return AppTheme.success;
+      case 'job': return AppTheme.primary;
+      default: return AppTheme.primary;
+    }
   }
 
   Widget _feedItem(BuildContext context, String title, String time, IconData icon, Color color) {

@@ -17,26 +17,90 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
   File? _originalImage;
   File? _generatedImage;
   bool _isGenerating = false;
-  double _sliderValue = 0.5;
+  
+  // Configuration State
   String _selectedStyle = 'Modern Minimalist';
+  String _selectedRoomType = 'Living Room';
+  double _creativityLevel = 0.5;
+  
+  final List<Map<String, dynamic>> _roomStyles = [
+    {'name': 'Modern Minimalist', 'icon': Icons.crop_square_rounded, 'color': Color(0xFFE0E0E0)},
+    {'name': 'Rustic Farmhouse', 'icon': Icons.cabin_rounded, 'color': Color(0xFF8D6E63)},
+    {'name': 'Industrial Chic', 'icon': Icons.factory_rounded, 'color': Color(0xFF607D8B)},
+    {'name': 'Scandanavian', 'icon': Icons.ac_unit_rounded, 'color': Color(0xFFB2DFDB)},
+    {'name': 'Cyberpunk', 'icon': Icons.games_rounded, 'color': Color(0xFFE040FB)},
+    {'name': 'Bohemian', 'icon': Icons.nature_people_rounded, 'color': Color(0xFFFFAB40)},
+  ];
 
-  final List<Map<String, String>> _roomStyles = [
-    {'name': 'Modern Minimalist', 'desc': 'Clean lines, neutral colors, open space'},
-    {'name': 'Rustic Farmhouse', 'desc': 'Warm wood tones, vintage accents, cozy'},
-    {'name': 'Industrial Chic', 'desc': 'Exposed brick, metal accents, raw textures'},
-    {'name': 'Scandanavian', 'desc': 'Light wood, white walls, functional simplicity'},
-    {'name': 'Cyberpunk', 'desc': 'Neon lights, futuristic tech, bold contrasts'},
+  final List<String> _roomTypes = [
+    'Living Room', 'Bedroom', 'Kitchen', 'Bathroom', 'Office', 'Dining Room', 'Outdoor'
   ];
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera); // Or gallery
-    if (pickedFile != null) {
-      setState(() {
-        _originalImage = File(pickedFile.path);
-        _generatedImage = null; // Reset previous generation
-      });
-    }
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Select Source', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(Icons.camera_alt_rounded, 'Camera', () async {
+                  Navigator.pop(ctx);
+                  final pickedFile = await picker.pickImage(source: ImageSource.camera);
+                  if (pickedFile != null) _setImage(File(pickedFile.path));
+                }),
+                _buildSourceOption(Icons.photo_library_rounded, 'Gallery', () async {
+                  Navigator.pop(ctx);
+                  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                  if (pickedFile != null) _setImage(File(pickedFile.path));
+                }),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _setImage(File image) {
+    setState(() {
+      _originalImage = image;
+      _generatedImage = null;
+    });
+  }
+
+  Widget _buildSourceOption(IconData icon, String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 32, color: AppTheme.accent),
+            const SizedBox(height: 8),
+            Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _generateDesign() async {
@@ -44,18 +108,11 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
     
     setState(() => _isGenerating = true);
     
-    // Simulate AI Processing time
+    // Simulate AI Processing
     await Future.delayed(const Duration(seconds: 4));
     
-    // MOCK: For now, we will just use the same image but assume the "generated" one 
-    // would be returned from an API. In a real app, this would be the URL or bytes.
-    // To make the visualizer work for demo, we'll just use the same image but maybe filter it or 
-    // ideally use a placeholder "after" image if available, or just demonstrate the UI flow.
-    // For this demo, let's pretend the 'original' is the 'generated' one for UI logic, 
-    // but in reality we'd swap them.
-    
     setState(() {
-      _generatedImage = _originalImage; // In real app: File(path_to_generated_image)
+      _generatedImage = _originalImage; 
       _isGenerating = false;
     });
   }
@@ -64,32 +121,37 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('AI Room Reimaginer', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Text('AI Room Reimaginer', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const BackButton(color: Colors.white),
+        leading: BackButton(color: Theme.of(context).colorScheme.onSurface),
+        actions: [
+          if (_generatedImage != null)
+             IconButton(
+               onPressed: () => setState(() => _generatedImage = null),
+               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+             ),
+        ],
       ),
       body: Stack(
         children: [
-          // Background
-          Container(color: Colors.black),
-          
+          // Main Content
           if (_originalImage == null)
-            _buildIntroUI()
+            _buildEmptyState()
           else if (_isGenerating)
-            _buildLoadingUI()
+            _buildLoadingState()
           else if (_generatedImage != null)
-            _buildComparisonUI() // The "After" state
+            _buildResultState()
           else
-            _buildStyleSelectionUI(), // The "Before" state logic
-            
+            _buildEditorState(),
         ],
       ),
     );
   }
 
-  Widget _buildIntroUI() {
+  Widget _buildEmptyState() {
     return Stack(
       children: [
         const PremiumBackground(),
@@ -99,31 +161,41 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.auto_fix_high_rounded, size: 80, color: AppTheme.accent).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1,1), end: const Offset(1.1,1.1)),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: Icon(Icons.auto_fix_high_rounded, size: 48, color: AppTheme.accent).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1,1), end: const Offset(1.1,1.1)),
+                ),
                 const SizedBox(height: 32),
                 Text(
                   'Reimagine Your Room',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
                 ).animate().fadeIn().slideY(),
                 const SizedBox(height: 16),
                 Text(
                   'Take a photo of your room and let our AI redesign it in seconds.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 16, color: Colors.white70),
+                  style: GoogleFonts.inter(fontSize: 16, color: Theme.of(context).hintColor),
                 ).animate().fadeIn(delay: 200.ms),
                 const SizedBox(height: 48),
                 SizedBox(
                   width: double.infinity,
-                  height: 60,
+                  height: 56,
                   child: ElevatedButton.icon(
                     onPressed: _pickImage,
-                    icon: const Icon(Icons.camera_alt_rounded),
+                    icon: const Icon(Icons.photo_camera_rounded),
                     label: const Text('Capture Room'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 8,
+                      shadowColor: AppTheme.accent.withValues(alpha: 0.5),
                     ),
                   ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
                 ),
@@ -135,117 +207,172 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
     );
   }
 
-  Widget _buildStyleSelectionUI() {
+  Widget _buildEditorState() {
     return Stack(
       children: [
-        // Background Image (The captured photo)
+        // Image Preview
         Positioned.fill(
+          bottom: 300, 
           child: Image.file(_originalImage!, fit: BoxFit.cover),
         ),
-        // Gradient overlay
-        Positioned.fill(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.transparent, Colors.black],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ),
         
-        // UI Controls
-        SafeArea(
-          child: Column(
-            children: [
-              const Spacer(),
-              Text('Select a Style', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 160,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: _roomStyles.length,
-                  itemBuilder: (context, index) {
-                    final style = _roomStyles[index];
-                    final isSelected = _selectedStyle == style['name'];
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedStyle = style['name']!),
-                      child: Container(
-                        width: 140,
-                        margin: const EdgeInsets.only(right: 16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.accent : Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: isSelected ? AppTheme.accent : Colors.white.withOpacity(0.2)),
-                          boxShadow: isSelected ? [BoxShadow(color: AppTheme.accent.withOpacity(0.5), blurRadius: 16)] : [],
+        // Gradient overlay for better UI visibility
+        Positioned(
+          top: 0, left: 0, right: 0, height: 120,
+          child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+        ),
+
+        // Controls Bottom Sheet
+        Positioned(
+          left: 0, right: 0, bottom: 0,
+          height: 450,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 40)],
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 24),
+                Text('Customize Redesign', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 24),
+                
+                // Room Type Selector
+                Text('Room Type', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 40,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _roomTypes.length,
+                    itemBuilder: (context, index) {
+                      final type = _roomTypes[index];
+                      final isSelected = type == _selectedRoomType;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: FilterChip(
+                          selected: isSelected,
+                          label: Text(type),
+                          onSelected: (v) => setState(() => _selectedRoomType = type),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          selectedColor: AppTheme.accent,
+                          checkmarkColor: Colors.white,
+                          labelStyle: GoogleFonts.inter(color: isSelected ? Colors.white : Colors.white70),
+                          side: const BorderSide(color: Colors.transparent),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                              child: Icon(Icons.palette_outlined, color: Colors.white, size: 20),
-                            ),
-                            const Spacer(),
-                            Text(style['name']!, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
-                            const SizedBox(height: 4),
-                            Text(style['desc']!, style: GoogleFonts.inter(color: Colors.white70, fontSize: 10), maxLines: 2, overflow: TextOverflow.ellipsis),
-                          ],
+                      );
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Style Selector
+                Text('Design Style', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _roomStyles.length,
+                    itemBuilder: (context, index) {
+                      final style = _roomStyles[index];
+                      final isSelected = style['name'] == _selectedStyle;
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedStyle = style['name']),
+                        child: Container(
+                          width: 80,
+                          margin: const EdgeInsets.only(right: 16),
+                          decoration: BoxDecoration(
+                            color: isSelected ? style['color'] : (style['color'] as Color).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(style['icon'], color: isSelected ? Colors.black : Colors.white),
+                              const SizedBox(height: 8),
+                              Text(
+                                style['name'].toString().split(' ')[0], 
+                                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: isSelected ? Colors.black : Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                child: SizedBox(
-                   width: double.infinity,
-                   height: 56,
-                   child: ElevatedButton(
-                     onPressed: _generateDesign,
-                     style: ElevatedButton.styleFrom(
-                       backgroundColor: Colors.white,
-                       foregroundColor: Colors.black,
-                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                     ),
-                     child: const Text('Generate Design ✨', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                   ),
+
+                const SizedBox(height: 24),
+                
+                // Creativity Slider
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('AI Creativity', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
+                    Text('${(_creativityLevel * 100).toInt()}%', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.accent)),
+                  ],
                 ),
-              ),
-            ],
-          ),
+                Slider(
+                  value: _creativityLevel,
+                  onChanged: (v) => setState(() => _creativityLevel = v),
+                  activeColor: AppTheme.accent,
+                  inactiveColor: Colors.white.withValues(alpha: 0.1),
+                ),
+                
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _generateDesign,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text('Generate Preview', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().slideY(begin: 1, duration: 400.ms, curve: Curves.easeOutQuint),
         ),
       ],
     );
   }
 
-  Widget _buildLoadingUI() {
+  Widget _buildLoadingState() {
     return Stack(
       children: [
         Positioned.fill(child: Image.file(_originalImage!, fit: BoxFit.cover)),
-        Positioned.fill(child: Container(color: Colors.black.withOpacity(0.7))),
+        Positioned.fill(child: Container(color: Colors.black.withValues(alpha: 0.8))),
         Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
-                width: 80, height: 80,
-                child: CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 6),
+              SizedBox(
+                width: 100, height: 100,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(width: 100, height: 100, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation(AppTheme.accent), strokeWidth: 2)),
+                    Icon(Icons.auto_fix_high_rounded, color: Colors.white, size: 40).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: Offset(1,1), end: Offset(1.2,1.2)),
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
-              Text('Dreaming up your new $_selectedStyle room...', 
-                textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold)
-              ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1500.ms),
-              const SizedBox(height: 16),
-              const Text('Identifying furniture structures...\nApplying lighting models...', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
+              Text('Reimagining your room...', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 8),
+              Text('Applying $_selectedStyle style\nOptimizing for $_selectedRoomType layout', textAlign: TextAlign.center, style: GoogleFonts.inter(color: Colors.white54)),
             ],
           ),
         ),
@@ -253,100 +380,108 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
     );
   }
 
-  Widget _buildComparisonUI() {
+  Widget _buildResultState() {
+    return _AdvancedComparisonView(
+      original: _originalImage!,
+      generated: _generatedImage!, // In a real app, this would be the AI output
+      style: _selectedStyle,
+    );
+  }
+}
+
+class _AdvancedComparisonView extends StatefulWidget {
+  final File original;
+  final File generated;
+  final String style;
+  
+  const _AdvancedComparisonView({required this.original, required this.generated, required this.style});
+
+  @override
+  State<_AdvancedComparisonView> createState() => _AdvancedComparisonViewState();
+}
+
+class _AdvancedComparisonViewState extends State<_AdvancedComparisonView> {
+  double _sliderValue = 0.5;
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Base Layer: Original Image
-        Positioned.fill(child: Image.file(_originalImage!, fit: BoxFit.cover)),
-        
-        // Top Layer: Generated Image (Clipped by slider)
+        Positioned.fill(child: Image.file(widget.original, fit: BoxFit.cover)),
         Positioned.fill(
           child: ClipRect(
             clipper: _SliderClipper(_sliderValue),
-            child: ColorFiltered( // MOCK EFFECT: Just invert/sepia to show "diff" since we don't have real AI yet
-               colorFilter: const ColorFilter.mode(Colors.deepOrange, BlendMode.hue), // Dramatic tint to simulate change
-               child: Image.file(_generatedImage!, fit: BoxFit.cover),
+            child: ColorFiltered( // MOCK EFFECT for demo
+              colorFilter: const ColorFilter.mode(Colors.purpleAccent, BlendMode.hue), 
+              child: Image.file(widget.generated, fit: BoxFit.cover),
             ),
           ),
         ),
+        _buildSliderHandle(),
         
-        // Slider Handle
-        Positioned.fill(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              return Stack(
-                children: [
-                  Positioned(
-                    left: width * _sliderValue - 2, // Center line
-                    top: 0, bottom: 0,
-                    child: Container(width: 4, color: Colors.white),
-                  ),
-                  Positioned(
-                    left: width * _sliderValue - 24, // Handle
-                    top: constraints.maxHeight / 2 - 24,
-                    child: GestureDetector(
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _sliderValue += details.delta.dx / width;
-                          _sliderValue = _sliderValue.clamp(0.0, 1.0);
-                        });
-                      },
-                      child: Container(
-                        width: 48, height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10)],
-                        ),
-                        child: const Icon(Icons.compare_arrows_rounded, color: Colors.black),
-                      ),
-                    ),
-                  ),
-                  // Labels
-                  Positioned(bottom: 40, left: 20, child: _labelBadge('BEFORE')),
-                  Positioned(bottom: 40, right: 20, child: _labelBadge('AFTER ($_selectedStyle)')),
-                  
-                  // Reset / Save Buttons
-                  SafeArea(
-                    child: Align(
-                      alignment: Alignment.topRight,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton.filled(
-                              onPressed: () => setState(() { _generatedImage = null; }),
-                              icon: const Icon(Icons.refresh),
-                              style: IconButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.2)),
-                            ),
-                            const SizedBox(width: 12),
-                            ElevatedButton.icon(
-                               onPressed: (){}, // TODO: Save to gallery
-                               icon: const Icon(Icons.download_rounded),
-                               label: const Text('Save'),
-                               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+        // Bottom Tools
+        Positioned(
+          bottom: 40, left: 24, right: 24,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+               _actionButton(Icons.share_rounded, 'Share', () {}),
+               _actionButton(Icons.download_rounded, 'Save', () {}),
+               _actionButton(Icons.shopping_bag_outlined, 'Shop Items', () {}),
+            ],
+          ).animate().slideY(begin: 1, curve: Curves.easeOutBack),
         ),
       ],
     );
   }
+  
+  Widget _actionButton(IconData icon, String label, VoidCallback onTap) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+            child: Icon(icon, color: Colors.black),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
+      ],
+    );
+  }
 
-  Widget _labelBadge(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: Colors.black.withOpacity(0.6), borderRadius: BorderRadius.circular(8)),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+  Widget _buildSliderHandle() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            Positioned(
+              left: constraints.maxWidth * _sliderValue - 2,
+              top: 0, bottom: 0,
+              child: Container(width: 4, color: Colors.white),
+            ),
+            Positioned(
+              left: constraints.maxWidth * _sliderValue - 24,
+              top: constraints.maxHeight / 2 - 24,
+              child: GestureDetector(
+                onPanUpdate: (d) => setState(() => _sliderValue = (_sliderValue + d.delta.dx / constraints.maxWidth).clamp(0.0, 1.0)),
+                child: Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 8)],
+                  ),
+                  child: const Icon(Icons.compare_arrows_rounded),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -356,9 +491,7 @@ class _SliderClipper extends CustomClipper<Rect> {
   _SliderClipper(this.value);
 
   @override
-  Rect getClip(Size size) {
-    return Rect.fromLTRB(size.width * value, 0, size.width, size.height);
-  }
+  Rect getClip(Size size) => Rect.fromLTRB(size.width * value, 0, size.width, size.height);
 
   @override
   bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => true;

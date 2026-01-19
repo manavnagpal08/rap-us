@@ -36,7 +36,7 @@ class _ContractorHistoryScreenState extends State<ContractorHistoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_rounded, size: 64, color: Theme.of(context).hintColor.withOpacity(0.2)),
+                  Icon(Icons.history_rounded, size: 64, color: Theme.of(context).hintColor.withValues(alpha: 0.2)),
                   const SizedBox(height: 16),
                   Text('No project history yet', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
                 ],
@@ -65,7 +65,7 @@ class _ContractorHistoryScreenState extends State<ContractorHistoryScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -73,7 +73,7 @@ class _ContractorHistoryScreenState extends State<ContractorHistoryScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: (isCompleted ? AppTheme.success : AppTheme.error).withOpacity(0.1),
+              color: (isCompleted ? AppTheme.success : AppTheme.error).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(

@@ -306,6 +306,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   Widget _buildContractorCard(BuildContext context, Map<String, dynamic> c) {
     final l10n = AppLocalizations.of(context)!;
+    final isGuest = _auth.currentUser == null; // Check for guest
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -351,47 +353,65 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () => _showContractorDetails(context, c),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
+          if (isGuest)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                   Navigator.pushNamed(context, '/login'); 
+                },
+                icon: const Icon(Icons.lock_outline, size: 16),
+                label: const Text('Login to Contact'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () => _showContractorDetails(context, c),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(l10n.viewProfile, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
                     ),
-                    child: Text(l10n.viewProfile, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary)),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(
-                          otherUserId: c['id'],
-                          otherUserName: c['name'],
+                const SizedBox(width: 8),
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            otherUserId: c['id'],
+                            otherUserName: c['name'],
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  icon: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).colorScheme.primary),
-                  tooltip: 'Message',
+                      );
+                    },
+                    icon: Icon(Icons.chat_bubble_outline_rounded, color: Theme.of(context).colorScheme.primary),
+                    tooltip: 'Message',
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
@@ -399,6 +419,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   void _showContractorDetails(BuildContext context, Map<String, dynamic> c) {
     final l10n = AppLocalizations.of(context)!;
+    final isGuest = _auth.currentUser == null;
+
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -431,6 +453,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 Text('${c['city']}, ${c['state']}', style: GoogleFonts.inter(color: Theme.of(context).hintColor)),
               ]),
               const SizedBox(height: 32),
+              if (isGuest)
+                 Center(child: Text("Login to call or message", style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor)))
+              else
               Row(
                 children: [
                   Expanded(
