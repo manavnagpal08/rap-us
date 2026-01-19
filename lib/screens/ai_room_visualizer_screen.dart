@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:rap_app/widgets/premium_background.dart';
 
@@ -14,8 +14,8 @@ class AiRoomVisualizerScreen extends StatefulWidget {
 }
 
 class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
-  File? _originalImage;
-  File? _generatedImage;
+  Uint8List? _originalImage;
+  Uint8List? _generatedImage;
   bool _isGenerating = false;
   
   // Configuration State
@@ -58,12 +58,12 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
                 _buildSourceOption(Icons.camera_alt_rounded, 'Camera', () async {
                   Navigator.pop(ctx);
                   final pickedFile = await picker.pickImage(source: ImageSource.camera);
-                  if (pickedFile != null) _setImage(File(pickedFile.path));
+                  if (pickedFile != null) _setImage(await pickedFile.readAsBytes());
                 }),
                 _buildSourceOption(Icons.photo_library_rounded, 'Gallery', () async {
                   Navigator.pop(ctx);
                   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null) _setImage(File(pickedFile.path));
+                  if (pickedFile != null) _setImage(await pickedFile.readAsBytes());
                 }),
               ],
             ),
@@ -74,7 +74,7 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
     );
   }
 
-  void _setImage(File image) {
+  void _setImage(Uint8List image) {
     setState(() {
       _originalImage = image;
       _generatedImage = null;
@@ -213,7 +213,7 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
         // Image Preview
         Positioned.fill(
           bottom: 300, 
-          child: Image.file(_originalImage!, fit: BoxFit.cover),
+          child: Image.memory(_originalImage!, fit: BoxFit.cover),
         ),
         
         // Gradient overlay for better UI visibility
@@ -353,7 +353,7 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
   Widget _buildLoadingState() {
     return Stack(
       children: [
-        Positioned.fill(child: Image.file(_originalImage!, fit: BoxFit.cover)),
+        Positioned.fill(child: Image.memory(_originalImage!, fit: BoxFit.cover)),
         Positioned.fill(child: Container(color: Colors.black.withValues(alpha: 0.8))),
         Center(
           child: Column(
@@ -390,8 +390,8 @@ class _AiRoomVisualizerScreenState extends State<AiRoomVisualizerScreen> {
 }
 
 class _AdvancedComparisonView extends StatefulWidget {
-  final File original;
-  final File generated;
+  final Uint8List original;
+  final Uint8List generated;
   final String style;
   
   const _AdvancedComparisonView({required this.original, required this.generated, required this.style});
@@ -407,13 +407,13 @@ class _AdvancedComparisonViewState extends State<_AdvancedComparisonView> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: Image.file(widget.original, fit: BoxFit.cover)),
+        Positioned.fill(child: Image.memory(widget.original, fit: BoxFit.cover)),
         Positioned.fill(
           child: ClipRect(
             clipper: _SliderClipper(_sliderValue),
             child: ColorFiltered( // MOCK EFFECT for demo
               colorFilter: const ColorFilter.mode(Colors.purpleAccent, BlendMode.hue), 
-              child: Image.file(widget.generated, fit: BoxFit.cover),
+              child: Image.memory(widget.generated, fit: BoxFit.cover),
             ),
           ),
         ),
