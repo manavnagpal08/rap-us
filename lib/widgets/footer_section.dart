@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:rap_app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:rap_app/screens/legal_screen.dart';
 
 class FooterSection extends StatelessWidget {
   const FooterSection({super.key});
@@ -309,7 +310,12 @@ class FooterSection extends StatelessWidget {
   Widget _footerLink(String text, Color color, BuildContext context) {
     return InkWell(
       onTap: () {
-          // Show dialog for simulated pages
+        if (text == "Privacy Policy") {
+          LegalScreen.show(context, title: "Privacy Policy", type: "privacy_policy");
+        } else if (text.contains("Terms")) { // Matches "Terms" and "Terms of Service"
+          LegalScreen.show(context, title: "Terms of Service", type: "terms_conditions");
+        } else {
+           // Show dialog for simulated pages or others
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
@@ -318,6 +324,7 @@ class FooterSection extends StatelessWidget {
               actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close"))],
             ),
           );
+        }
       },
       child: Text(
         text,
