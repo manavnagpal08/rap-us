@@ -1,301 +1,306 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:rap_app/theme/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FooterSection extends StatelessWidget {
   const FooterSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Colors extracted from Image
-    const Color darkBlue = Color(0xFF152642); 
-    const Color orange = Color(0xFFE96D3B); 
-    const Color orangeText = Color(0xFFE96D3B);
-
     final bool isDesktop = MediaQuery.of(context).size.width > 900;
-    
-    return Container(
-      width: double.infinity,
-      color: darkBlue,
-      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Column(
-          children: [
-            // --- TOP HEADER SECTION ---
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (!isDesktop) {
-                  return Column(
-                    children: [
-                      // Logo & Titles
-                      Image.asset('assets/images/logo.png', height: 100),
-                      const SizedBox(height: 16),
-                      Text(
-                        'RELIABLE ARTISAN PROFESSIONAL LLC',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        'YOUR TRUSTED GENERAL CONTRACTOR', // Fixed typo
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: orangeText,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Contact Info
-                      _buildContactInfo(orangeText, isCentered: true),
-                    ],
-                  );
-                } else {
-                  return Row(
-                    children: [
-                      // Logo
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: EdgeInsets.all(4),
-                        child: Image.asset('assets/images/logo.png', height: 100),
-                      ),
-                      const SizedBox(width: 24),
-                      // Texts
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'RELIABLE ARTISAN PROFESSIONAL LLC',
-                              style: GoogleFonts.outfit(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              'YOUR TRUSTED GENERAL CONTRACTOR',
-                              style: GoogleFonts.outfit(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: orangeText,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Contact
-                      _buildContactInfo(orangeText),
-                    ],
-                  );
-                }
-              },
-            ),
-            
-            const SizedBox(height: 60),
+    const Color footerBg = Color(0xFF0F172A); // Dark Slate Blue
+    const Color textColor = Color(0xFF94A3B8); // Slate 400
+    const Color linkColor = Colors.white;
+    const Color accentColor = Color(0xFFE96D3B); // The Orange from their brand
 
-            // --- BOTTOM CONTENT SECTION ---
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (!isDesktop) {
-                   return Column(
-                     children: [
-                       _buildServicesCard(orange),
-                       const SizedBox(height: 32),
-                       _buildIconsRow(),
-                        const SizedBox(height: 32),
-                       _buildValuesCard('RELIABLE', 'We are the dependable partner you can trust to deliver quality results on time and within budget, every single time', orange),
-                       const SizedBox(height: 16),
-                       _buildValuesCard('ARTISAN', 'We apply skilled craftsmanship and meticulous attention to detail to create beautiful, lasting improvements in your home', orange),
-                        const SizedBox(height: 16),
-                       _buildValuesCard('PROFESSIONAL', 'We handle every project with the highest standards of integrity, clear communication, and industry expertise', orange),
-                     ],
-                   );
-                } else {
-                  return IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Services Column
-                        SizedBox(
-                          width: 320,
-                          child: _buildServicesCard(orange),
-                        ),
-                        const SizedBox(width: 40),
-                        // Right Side
-                        Expanded(
-                          child: Column(
-                            children: [
-                              // Icons Row
-                              _buildIconsRow(),
-                              const Spacer(),
-                              // 3 Value Cards
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(child: _buildValuesCard('RELIABLE', 'We are the dependable partner you can trust to deliver quality results on time and within budget, every single time', orange)),
-                                  const SizedBox(width: 20),
-                                  Expanded(child: _buildValuesCard('ARTISAN', 'We apply skilled craftsmanship and meticulous attention to detail to create beautiful, lasting improvements in your home', orange)),
-                                  const SizedBox(width: 20),
-                                  Expanded(child: _buildValuesCard('PROFESSIONAL', 'We handle every project with the highest standards of integrity, clear communication, and industry expertise', orange)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+    return Container(
+      color: footerBg,
+      padding: const EdgeInsets.only(top: 64, bottom: 24, left: 24, right: 24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Main Footer Content ---
+              if (isDesktop)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Col 1: Brand & Socials
+                    Expanded(
+                      flex: 2,
+                      child: _buildBrandColumn(accentColor, textColor),
                     ),
+                    const SizedBox(width: 40),
+                    // Col 2: Quick Links
+                    Expanded(
+                      child: _buildLinksColumn("Company", [
+                        "About Us",
+                        "Our Team",
+                        "Careers",
+                        "Press",
+                        "Contact"
+                      ], textColor, linkColor),
+                    ),
+                    const SizedBox(width: 24),
+                    // Col 3: Services
+                    Expanded(
+                      child: _buildLinksColumn("Services", [
+                         "Renovations",
+                         "HVAC Systems",
+                         "Roofing",
+                         "Plumbing",
+                         "Electrical",
+                         "Landscaping"
+                      ], textColor, linkColor),
+                    ),
+                    const SizedBox(width: 24),
+                    // Col 4: Contact
+                    Expanded(
+                      flex: 1,
+                      child: _buildContactColumn(textColor, linkColor),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                     _buildBrandColumn(accentColor, textColor),
+                     const SizedBox(height: 40),
+                     Wrap(
+                       spacing: 40,
+                       runSpacing: 40,
+                       children: [
+                         _buildLinksColumn("Company", [
+                            "About Us",
+                            "Our Team",
+                            "Careers", 
+                            "Press",
+                            "Contact"
+                         ], textColor, linkColor),
+                         _buildLinksColumn("Services", [
+                             "Renovations",
+                             "HVAC Systems",
+                             "Roofing",
+                             "Plumbing",
+                             "Electrical",
+                             "Landscaping"
+                          ], textColor, linkColor),
+                         _buildContactColumn(textColor, linkColor),
+                       ],
+                     ),
+                  ],
+                ),
+
+              const SizedBox(height: 64),
+              Divider(color: Colors.white.withOpacity(0.1)),
+              const SizedBox(height: 24),
+
+              // --- Bottom Bar ---
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 600) {
+                     return Column(
+                       children: [
+                         Text(
+                          "© ${DateTime.now().year} Reliable Artisan Professional LLC. All rights reserved.",
+                          style: GoogleFonts.inter(fontSize: 12, color: textColor),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _footerLink("Privacy Policy", textColor),
+                            const SizedBox(width: 24),
+                            _footerLink("Terms", textColor),
+                            const SizedBox(width: 24),
+                            _footerLink("Cookies", textColor),
+                          ],
+                        )
+                       ],
+                     );
+                  }
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "© ${DateTime.now().year} Reliable Artisan Professional LLC. All rights reserved.",
+                        style: GoogleFonts.inter(fontSize: 14, color: textColor),
+                      ),
+                      Row(
+                        children: [
+                          _footerLink("Privacy Policy", textColor),
+                          const SizedBox(width: 24),
+                          _footerLink("Terms of Service", textColor),
+                          const SizedBox(width: 24),
+                          _footerLink("Cookie Settings", textColor),
+                        ],
+                      ),
+                    ],
                   );
-                }
-              },
-            ),
-          ],
+                },
+              )
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildContactInfo(Color orangeText, {bool isCentered = false}) {
+  Widget _buildBrandColumn(Color accent, Color textColor) {
     return Column(
-      crossAxisAlignment: isCentered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Text(
-          'CONTACT US:',
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: orangeText,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Image.asset('assets/images/logo.png', height: 40),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "RAP US",
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    "Reliable Artisan Professional",
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 24),
         Text(
-          'Phone: +1 720 443 1536',
-          style: GoogleFonts.inter(fontSize: 15, color: Colors.white, height: 1.5),
+          "Your trusted partner for home improvement, maintenance, and construction management. Bringing transparency and quality to every project.",
+          style: GoogleFonts.inter(fontSize: 14, color: textColor, height: 1.6),
         ),
-        Text(
-          'Email: support@coloradorap.com',
-          style: GoogleFonts.inter(fontSize: 15, color: Colors.white, height: 1.5),
-        ),
-         Text(
-          'Visit Us: www.coloradorap.com',
-          style: GoogleFonts.inter(fontSize: 15, color: Colors.white, height: 1.5),
+        const SizedBox(height: 32),
+        Row(
+          children: [
+            _socialIcon(FontAwesomeIcons.facebookF),
+            const SizedBox(width: 16),
+            _socialIcon(FontAwesomeIcons.twitter),
+            const SizedBox(width: 16),
+            _socialIcon(FontAwesomeIcons.instagram),
+            const SizedBox(width: 16),
+            _socialIcon(FontAwesomeIcons.linkedinIn),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildServicesCard(Color color) {
-    final services = [
-      'Landscaping',
-      'HVAC Installation',
-      'Roof Replacement',
-      'Handyman Services',
-      'Basement Finishing',
-      'Electrical & Plumbing',
-      'Exterior & Interior Painting',
-      'Flooring Refinish & Installation',
-      'Kitchen & Bathroom Remodeling'
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-         color: color,
-         borderRadius: BorderRadius.circular(40),
-         boxShadow: [
-           BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: Offset(0, 5))
-         ]
+  Widget _socialIcon(IconData icon) {
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: FaIcon(icon, size: 18, color: Colors.white),
       ),
-      child: Column(
-        children: [
-          Text(
-            'SERVICES',
-            style: GoogleFonts.outfit(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF152642), // Dark Blue text on Orange
-            ),
+    );
+  }
+
+  Widget _buildLinksColumn(String title, List<String> links, Color textColor, Color linkColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          const SizedBox(height: 24),
-          ...services.map((s) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+        ),
+        const SizedBox(height: 24),
+        ...links.map((link) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: InkWell(
+            onTap: () {},
             child: Text(
-              s,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
+              link,
+              style: GoogleFonts.inter(fontSize: 14, color: textColor),
             ),
-          )),
-        ],
-      ),
+          ),
+        )),
+      ],
     );
   }
 
-  Widget _buildIconsRow() {
-    final icons = [
-      FontAwesomeIcons.screwdriverWrench, 
-      FontAwesomeIcons.tableCells, 
-      FontAwesomeIcons.paintRoller,
-      FontAwesomeIcons.trowelBricks,
-      FontAwesomeIcons.helmetSafety,
-      FontAwesomeIcons.hammer,
-      FontAwesomeIcons.rulerCombined,
-      FontAwesomeIcons.triangleExclamation,
-      FontAwesomeIcons.seedling,
-    ];
-
-    return Wrap(
-      spacing: 32,
-      runSpacing: 24,
-      alignment: WrapAlignment.center,
-      children: icons.map((icon) => FaIcon(icon, size: 40, color: Colors.white)).toList(),
+  Widget _buildContactColumn(Color textColor, Color linkColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Get in Touch",
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 24),
+         _contactRow(Icons.email_outlined, "support@coloradorap.com"),
+         const SizedBox(height: 16),
+         _contactRow(Icons.phone_rounded, "+1 720 443 1536"),
+         const SizedBox(height: 16),
+         _contactRow(Icons.location_on_outlined, "Denver, Colorado, US"),
+      ],
     );
   }
 
-  Widget _buildValuesCard(String title, String desc, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-           BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: Offset(0, 5))
-         ]
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-             style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF152642), // Dark Blue text
-            ),
+  Widget _contactRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFFE96D3B)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
           ),
-          const SizedBox(height: 16),
-          Text(
-            desc,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              color: Colors.white,
-              height: 1.4,
-            ),
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _footerLink(String text, Color color) {
+    return InkWell(
+      onTap: () {},
+      child: Text(
+        text,
+        style: GoogleFonts.inter(fontSize: 13, color: color),
       ),
     );
   }
