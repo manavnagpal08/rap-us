@@ -256,18 +256,27 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(context).size.width > 600 ? 24 : 16,
-                vertical: 40,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 900),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    child: _buildCurrentState(),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width > 600 ? 24 : 16,
+                      vertical: 40,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 900),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          child: _buildCurrentState(),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  // Full Width Footer
+                  if (_currentStepIndex == -1) // Only show on Dashboard
+                    const FooterSection(),
+                ],
               ),
             ),
           ),
@@ -708,8 +717,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         const SizedBox(height: 48),
         _buildBenefitGrid().animate().fadeIn(delay: 300.ms),
-        const SizedBox(height: 64),
-        const FooterSection(),
       ],
     );
   }
