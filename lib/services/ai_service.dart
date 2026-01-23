@@ -35,10 +35,17 @@ class AiService {
 
     const prompt = """
     Analyze this image for a US-based repair or build estimation app.
-    Return ONLY VALID JSON.
-    
-    Output Format:
+    STRICT VALIDATION REQUIRED.
+
+    1. CHECK IF IMAGE IS VALID FOR A HOME REPAIR/IMPROVEMENT APP:
+       - REJECT: Selfies, people, animals, food, random objects (phones, screenshots), clutter, fuzzy/unclear images.
+       - REJECT: Commercial/Industrial settings (factories, warehouses, office buildings, large construction sites).
+       - ACCEPT: Home interiors, exteriors, furniture, appliances, damage to home fixtures, yard/landscape elements.
+
+    Output Format (JSON ONLY):
     {
+      "is_valid": true/false, 
+      "rejection_reason": "If invalid, explain why in 1 clear sentence for the user. e.g. 'This appears to be a selfie, please upload a home repair image.'",
       "object_type": "Specific name of the object (e.g. 'Wooden Dining Chair', 'Kitchen Cabinet')",
       "estimated_dimensions": "Estimated H x W x D in feet/inches (e.g. '3ft x 2ft' or 'Standard Size')",
       "material": "Dominant material detected (e.g. 'Oak Wood', 'Metal', 'Upholstery')",
@@ -51,9 +58,9 @@ class AiService {
     }
     
     Rules:
+    - IF is_valid is FALSE, you do not need to populate object_type or questions.
     - DO NOT ask basic questions like 'What is this?'. Assume the role of an expert.
-    - If confident about dimensions, include them; otherwise, ask a verification question like 'Is this roughly 6ft wide?'.
-    - Focus questions on INTENT (Repair vs Replace), STYLE (Modern vs Classic), or SPECIFIC DETAILS not visible (e.g., 'Is the plumbing inside copper or PVC?').
+    - Questions must be visually specific to the object in the image.
     """;
 
     if (provider == 'openai') {

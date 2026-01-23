@@ -98,18 +98,27 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         final analysis = await _ai.analyzeImage(_imageBase64!);
 
-        List<dynamic> questions = analysis['questions'] ?? [];
-        String dimensions = analysis['estimated_dimensions'] ?? '';
-
-        // If dimensions detected, use them. If not, add question.
-        if (dimensions.isNotEmpty && dimensions.toLowerCase() != 'unknown') {
-          _userInput['dimensions'] = dimensions;
-        }
-
-        // Remove forced basic questions. We rely on the AI's "expert" mode from the service.
-        // if (analysis['object_type'] == null) questions.add("What is this object?");
-
         if (mounted) {
+          // ----------------------------------------------------------------
+          // 1 & 2 & 3. STRICT VALIDATION & FLOW CONTROL
+          // ----------------------------------------------------------------
+          if (analysis['is_valid'] == false) {
+             setState(() {
+               _imageAnalysis = analysis;
+               _isLoading = false;
+               _currentStepIndex = 98; // Special index for Rejection State
+             });
+             return; // STOP FLOW HERE
+          }
+
+          List<dynamic> questions = analysis['questions'] ?? [];
+          String dimensions = analysis['estimated_dimensions'] ?? '';
+
+          // If dimensions detected, use them. If not, add question.
+          if (dimensions.isNotEmpty && dimensions.toLowerCase() != 'unknown') {
+            _userInput['dimensions'] = dimensions;
+          }
+
           setState(() {
             _imageAnalysis = analysis;
             // Force the primary scope question as the first question
@@ -294,9 +303,86 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCurrentState() {
     if (_isLoading && _currentStepIndex == -1) return _buildProcessingView();
     if (_currentStepIndex == -1) return _buildDashboardAndUpload();
+    if (_currentStepIndex == 98) return _buildRejectionView(); // NEW: Rejection State
     if (_currentStepIndex >= 0 && _currentStepIndex < 99)
       return _buildQuestionSection();
     return _buildResultSection();
+  }
+
+  // ----------------------------------------------------------------
+  // REJECTION VIEW (For Invalid Images)
+  // ----------------------------------------------------------------
+  Widget _buildRejectionView() {
+    final reason = _imageAnalysis?['rejection_reason'] ?? "Image not clear enough.";
+
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+          ),
+          child: Column(
+            children: [
+               const Icon(Icons.error_outline_rounded, color: Colors.red, size: 64),
+               const SizedBox(height: 24),
+               Text(
+                 "Unable to Process Image",
+                 style: GoogleFonts.outfit(
+                   fontSize: 24,
+                   fontWeight: FontWeight.bold,
+                   color: Colors.red,
+                 ),
+                 textAlign: TextAlign.center,
+               ),
+               const SizedBox(height: 16),
+               Text(
+                 reason,
+                 style: GoogleFonts.inter(
+                   fontSize: 16,
+                   color: Theme.of(context).colorScheme.onSurface,
+                   height: 1.5,
+                 ),
+                 textAlign: TextAlign.center,
+               ),
+               const SizedBox(height: 32),
+               SizedBox(
+                 width: double.infinity,
+                 height: 56,
+                 child: ElevatedButton.icon(
+                   onPressed: () {
+                     setState(() {
+                       _image = null;
+                       _currentStepIndex = -1;
+                       widget.onEstimatingChanged?.call(false);
+                     });
+                   },
+                   icon: const Icon(Icons.refresh),
+                   label: const Text("Try Another Image"),
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: Colors.red,
+                     foregroundColor: Colors.white,
+                   ),
+                 ),
+               ),
+               const SizedBox(height: 16),
+               TextButton(
+                 onPressed: () {
+                   setState(() {
+                     _image = null;
+                     _currentStepIndex = -1;
+                      widget.onEstimatingChanged?.call(false);
+                   });
+                 },
+                 child: const Text("Go Back to Dashboard"),
+               )
+            ],
+          ),
+        ).animate().shake(duration: 500.ms),
+      ],
+    );
   }
 
   Widget _buildProcessingView() {
@@ -331,31 +417,58 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       key: const ValueKey('dashboard'),
       children: [
-        // 1. START ESTIMATE BUTTON AT TOP
+        // 1. START ESTIMATE BUTTON AT TOP - PREMIUM DESIGN
         Container(
           width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 24),
-          child: ElevatedButton.icon(
-            onPressed: _isLoading ? null : () {
-               // Scroll to upload section or trigger picker directly?
-               // Requirement says "Place the Start Estimate button at the TOP".
-               // Since clicking buttons below triggers picker, this should probably just highlight or scroll to it, 
-               // OR simply be the primary specific action.
-               // Let's make it trigger the camera directly as a primary action for "Start Estimate".
-               _pickImage(ImageSource.camera);
-            }, 
-            icon: const Icon(Icons.add_a_photo_outlined, size: 24),
-            label: const Text("Start Estimate"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0055FF), // Strong primary color
-              foregroundColor: Colors.white,
-              elevation: 4,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              textStyle: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
+          margin: const EdgeInsets.only(bottom: 32),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0066FF), Color(0xFF0055FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0055FF).withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.1),
+                blurRadius: 0,
+                offset: const Offset(0, -2),
+                spreadRadius: -1,
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _isLoading ? null : () => _pickImage(ImageSource.camera),
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add_a_photo_rounded, size: 28, color: Colors.white),
+                    const SizedBox(width: 16),
+                    Text(
+                      "Start New Estimate",
+                      style: GoogleFonts.outfit(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+        ).animate().shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.1)),
 
         // Welcome Header
         if (user != null)
@@ -1167,17 +1280,18 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 _dynamicQuestions[_currentStepIndex],
                 style: GoogleFonts.outfit(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 26, // Slightly reduced but still distinct
+                  fontWeight: FontWeight.w600, // Cleaner weight
                   color: AppTheme.primary,
+                  height: 1.3, // Better line height
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               TextField(
                 controller: _inputController,
                 autofocus: true,
-                style: GoogleFonts.inter(fontSize: 18),
+                style: GoogleFonts.inter(fontSize: 18, height: 1.5),
                 onSubmitted: (_) => _submitAnswer(),
                 decoration: const InputDecoration(
                   hintText: 'Type your answer...',
