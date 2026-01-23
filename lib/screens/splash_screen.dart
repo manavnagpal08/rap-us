@@ -50,8 +50,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 300,
-                height: 300,
+                width: 350,
+                height: 350,
                 padding: const EdgeInsets.all(24),
                 child: Image.asset('assets/images/logo.png'),
               ),
@@ -60,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 'RAP US',
                 style: GoogleFonts.outfit(
                   color: Colors.white,
-                  fontSize: 56,
+                  fontSize: 48,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 4,
                 ),
@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 'Precision Estimations & Market',
                 style: GoogleFonts.inter(
                   color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
                 ),

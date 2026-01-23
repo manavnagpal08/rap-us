@@ -20,7 +20,8 @@ import 'package:rap_app/services/weather_service.dart';
 import 'package:rap_app/widgets/footer_section.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final ValueChanged<bool>? onEstimatingChanged;
+  const HomeScreen({super.key, this.onEstimatingChanged});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -84,6 +85,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = true;
           _currentStepIndex = -1;
           _dynamicQuestions = [];
+          
+          widget.onEstimatingChanged?.call(true); // Notify MainScreen to hide nav
+          
           _dynamicAnswers = [];
         });
       }
@@ -108,6 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (mounted) {
           setState(() {
             _imageAnalysis = analysis;
+            // Force the primary scope question as the first question
+            questions.insert(0, "What is the primary scope of the project?");
             _dynamicQuestions = List<String>.from(questions);
 
             // Standard questions if AI returns none (failsafe)
@@ -261,20 +267,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: MediaQuery.of(context).size.width > 600 ? 24 : 16,
-                      vertical: 40,
+                      vertical: 24, // Reduced top padding
                     ),
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 900),
                         child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
+                          duration: const Duration(milliseconds: 300),
                           child: _buildCurrentState(),
                         ),
                       ),
                     ),
                   ),
                   // Full Width Footer
-                  if (_currentStepIndex == -1) // Only show on Dashboard
+                  if (_currentStepIndex == -1 && !_isLoading) // Only show on Dashboard and not processing
                     const FooterSection(),
                 ],
               ),
@@ -286,10 +292,37 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCurrentState() {
+    if (_isLoading && _currentStepIndex == -1) return _buildProcessingView();
     if (_currentStepIndex == -1) return _buildDashboardAndUpload();
     if (_currentStepIndex >= 0 && _currentStepIndex < 99)
       return _buildQuestionSection();
     return _buildResultSection();
+  }
+
+  Widget _buildProcessingView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SpinKitFadingCircle(color: AppTheme.primary, size: 60),
+        const SizedBox(height: 24),
+        Text(
+          'Processing...',
+          style: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Analyzing your image...',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF64748B),
+            fontSize: 16,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildDashboardAndUpload() {
@@ -297,8 +330,33 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
     return Column(
       key: const ValueKey('dashboard'),
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 1. START ESTIMATE BUTTON AT TOP
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 24),
+          child: ElevatedButton.icon(
+            onPressed: _isLoading ? null : () {
+               // Scroll to upload section or trigger picker directly?
+               // Requirement says "Place the Start Estimate button at the TOP".
+               // Since clicking buttons below triggers picker, this should probably just highlight or scroll to it, 
+               // OR simply be the primary specific action.
+               // Let's make it trigger the camera directly as a primary action for "Start Estimate".
+               _pickImage(ImageSource.camera);
+            }, 
+            icon: const Icon(Icons.add_a_photo_outlined, size: 24),
+            label: const Text("Start Estimate"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0055FF), // Strong primary color
+              foregroundColor: Colors.white,
+              elevation: 4,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              textStyle: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+
         // Welcome Header
         if (user != null)
           // Modern Hero Card
@@ -393,23 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () {}, // Scroll to upload?
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text("New Estimate"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF0055FF),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                    ),
+                    // Removed button from here as it's now at the top
                   ],
                 ),
               ],
@@ -660,21 +702,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: _buildLargeActionButton(
-                                onPressed: () => _pickImage(ImageSource.camera),
+                                onPressed: _isLoading ? () {} : () => _pickImage(ImageSource.camera),
                                 icon: Icons.camera_alt_rounded,
                                 label: l10n.camera,
-                                color: const Color(0xFF0055FF),
+                                color: _isLoading ? Colors.grey : const Color(0xFF0055FF),
                               ),
                             ),
                             const SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,
                               child: _buildLargeActionButton(
-                                onPressed: () =>
+                                onPressed: _isLoading ? () {} : () =>
                                     _pickImage(ImageSource.gallery),
                                 icon: Icons.photo_library_rounded,
                                 label: l10n.gallery,
-                                color: const Color(0xFF10B981),
+                                color: _isLoading ? Colors.grey : const Color(0xFF10B981),
                               ),
                             ),
                           ],
@@ -684,17 +726,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _buildLargeActionButton(
-                            onPressed: () => _pickImage(ImageSource.camera),
+                            onPressed: _isLoading ? () {} : () => _pickImage(ImageSource.camera),
                             icon: Icons.camera_alt_rounded,
                             label: l10n.camera,
-                            color: const Color(0xFF0055FF),
+                            color: _isLoading ? Colors.grey : const Color(0xFF0055FF),
                           ),
                           const SizedBox(width: 20),
                           _buildLargeActionButton(
-                            onPressed: () => _pickImage(ImageSource.gallery),
+                            onPressed: _isLoading ? () {} : () => _pickImage(ImageSource.gallery),
                             icon: Icons.photo_library_rounded,
                             label: l10n.gallery,
-                            color: const Color(0xFF10B981),
+                            color: _isLoading ? Colors.grey : const Color(0xFF10B981),
                           ),
                         ],
                       );
@@ -1142,7 +1184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   contentPadding: EdgeInsets.all(24),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48), // Increased bottom spacing as requested
               SizedBox(
                 width: double.infinity,
                 height: 60,
@@ -1161,6 +1203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 24), // Extra bottom margin to prevent crowding
             ],
           ),
         ),

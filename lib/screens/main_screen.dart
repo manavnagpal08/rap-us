@@ -55,6 +55,13 @@ class _MainScreenState extends State<MainScreen> {
   final ScrollController _scrollController = ScrollController();
   final AiService _aiService = AiService();
   bool _isChatLoading = false;
+  bool _isEstimating = false;
+
+  void _handleEstimateChange(bool isEstimating) {
+    if (_isEstimating != isEstimating && mounted) {
+      setState(() => _isEstimating = isEstimating);
+    }
+  }
 
   @override
   void initState() {
@@ -221,7 +228,8 @@ class _MainScreenState extends State<MainScreen> {
           if (_isAdmin) const AdminScreen(),
         ]
       : [
-          const HomeScreen(),
+      : [
+          HomeScreen(onEstimatingChanged: _handleEstimateChange),
           if (!isGuest) const AiRoomVisualizerScreen(),
           const MarketplaceScreen(),
           if (!isGuest) const HistoryScreen(),
@@ -245,7 +253,9 @@ class _MainScreenState extends State<MainScreen> {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           extendBody: true, 
-          bottomNavigationBar: isDesktop ? null : _buildCustomBottomNav(l10n, isContractor, isGuest),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          extendBody: true, 
+          bottomNavigationBar: (isDesktop || _isEstimating) ? null : _buildCustomBottomNav(l10n, isContractor, isGuest),
           body: Stack(
             children: [
               const PremiumBackground(),
@@ -510,8 +520,8 @@ class _MainScreenState extends State<MainScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 32, vertical: isMobile ? 12 : 16),
+      margin: const EdgeInsets.fromLTRB(24, 12, 24, 8), // Reduced top margin
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 32, vertical: isMobile ? 8 : 12), // Reduced vertical padding
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor.withValues(alpha: 0.9), 
         borderRadius: BorderRadius.circular(100),
@@ -533,8 +543,8 @@ class _MainScreenState extends State<MainScreen> {
               children: [
                 Image.asset(
                   'assets/images/logo.png',
-                  width: isMobile ? 28 : 32,
-                  height: isMobile ? 28 : 32,
+                  width: isMobile ? 32 : 36, // Increased slightly
+                  height: isMobile ? 32 : 36,
                   fit: BoxFit.contain,
                 ).animate().rotate(duration: 800.ms, curve: Curves.easeOutBack),
                 const SizedBox(width: 8),
@@ -706,9 +716,11 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(items.length, (index) {
             final isSelected = _selectedIndex == index;
+            final isSelected = _selectedIndex == index;
             final item = items[index];
             return GestureDetector(
               onTap: () => setState(() => _selectedIndex = index),
+              behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

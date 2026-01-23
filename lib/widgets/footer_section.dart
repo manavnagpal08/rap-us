@@ -19,7 +19,7 @@ class FooterSection extends StatelessWidget {
 
     return Container(
       color: footerBg,
-      padding: const EdgeInsets.only(top: 64, bottom: 24, left: 24, right: 24),
+      padding: const EdgeInsets.only(top: 48, bottom: 16, left: 24, right: 24),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
@@ -98,7 +98,7 @@ class FooterSection extends StatelessWidget {
                   ],
                 ),
 
-              const SizedBox(height: 64),
+              const SizedBox(height: 48),
               Divider(color: Colors.white.withOpacity(0.1)),
               const SizedBox(height: 24),
 
@@ -110,7 +110,7 @@ class FooterSection extends StatelessWidget {
                        children: [
                          Text(
                           "© ${DateTime.now().year} Reliable Artisan Professional LLC. All rights reserved.",
-                          style: GoogleFonts.inter(fontSize: 12, color: textColor),
+                          style: GoogleFonts.inter(fontSize: 11, color: textColor),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
@@ -132,7 +132,7 @@ class FooterSection extends StatelessWidget {
                     children: [
                       Text(
                         "© ${DateTime.now().year} Reliable Artisan Professional LLC. All rights reserved.",
-                        style: GoogleFonts.inter(fontSize: 14, color: textColor),
+                        style: GoogleFonts.inter(fontSize: 12, color: textColor),
                       ),
                       Row(
                         children: [
@@ -177,7 +177,7 @@ class FooterSection extends StatelessWidget {
                   Text(
                     "RAP Colorado",
                     style: GoogleFonts.outfit(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -185,7 +185,7 @@ class FooterSection extends StatelessWidget {
                   Text(
                     "Reliable Artisan Professional",
                     style: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: accent,
                       fontWeight: FontWeight.w600,
                     ),
@@ -198,7 +198,7 @@ class FooterSection extends StatelessWidget {
         const SizedBox(height: 24),
         Text(
           "Your trusted partner for home improvement, maintenance, and construction management. Bringing transparency and quality to every project.",
-          style: GoogleFonts.inter(fontSize: 14, color: textColor, height: 1.6),
+          style: GoogleFonts.inter(fontSize: 12, color: textColor, height: 1.6),
         ),
         const SizedBox(height: 32),
         Row(
