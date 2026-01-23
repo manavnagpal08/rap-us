@@ -228,7 +228,6 @@ class _MainScreenState extends State<MainScreen> {
           if (_isAdmin) const AdminScreen(),
         ]
       : [
-      : [
           HomeScreen(onEstimatingChanged: _handleEstimateChange),
           if (!isGuest) const AiRoomVisualizerScreen(),
           const MarketplaceScreen(),
@@ -251,8 +250,6 @@ class _MainScreenState extends State<MainScreen> {
         }
 
         return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          extendBody: true, 
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           extendBody: true, 
           bottomNavigationBar: (isDesktop || _isEstimating) ? null : _buildCustomBottomNav(l10n, isContractor, isGuest),
@@ -715,7 +712,6 @@ class _MainScreenState extends State<MainScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(items.length, (index) {
-            final isSelected = _selectedIndex == index;
             final isSelected = _selectedIndex == index;
             final item = items[index];
             return GestureDetector(
