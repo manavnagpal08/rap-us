@@ -18,7 +18,7 @@ class PremiumBackground extends StatelessWidget {
           color: Theme.of(context).scaffoldBackgroundColor,
         ),
         
-        // Blob 1 - Top Left (Brand Orange)
+        // Blob 1 - Top Left (Brand Blue)
         Positioned(
           top: -100,
           left: -100,
@@ -27,7 +27,7 @@ class PremiumBackground extends StatelessWidget {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFE96D3B).withValues(alpha: isDark ? 0.12 : 0.08),
+              color: const Color(0xFF0055FF).withValues(alpha: isDark ? 0.12 : 0.08),
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true))
            .scale(begin: const Offset(1,1), end: const Offset(1.5,1.5), duration: 5.seconds)

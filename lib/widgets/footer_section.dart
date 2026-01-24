@@ -305,7 +305,7 @@ class FooterSection extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: const Color(0xFFE96D3B)),
+            Icon(icon, size: 18, color: AppTheme.accent),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

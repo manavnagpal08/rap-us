@@ -26,6 +26,7 @@ import 'package:rap_app/screens/rap_gpt_screen.dart';
 import 'package:rap_app/screens/ai_room_visualizer_screen.dart';
 import 'package:rap_app/screens/admin_screen.dart';
 import 'package:rap_app/screens/maintenance_screen.dart';
+import 'package:rap_app/screens/all_chats_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -223,6 +224,7 @@ class _MainScreenState extends State<MainScreen> {
           const ContractorLeadsScreen(),
           const ContractorEarningsScreen(),
           const ContractorHistoryScreen(),
+          const AllChatsScreen(),
           const SettingsScreen(),
           const DocumentationScreen(),
           if (_isAdmin) const AdminScreen(),
@@ -233,6 +235,7 @@ class _MainScreenState extends State<MainScreen> {
           const MarketplaceScreen(),
           if (!isGuest) const HistoryScreen(),
           if (!isGuest) const MyHomeInventoryScreen(),
+          if (!isGuest) const AllChatsScreen(),
           const SettingsScreen(),
           const DocumentationScreen(),
           if (_isAdmin) const AdminScreen(),
@@ -290,8 +293,8 @@ class _MainScreenState extends State<MainScreen> {
                                   Container(
                                     height: 80,
                                     width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(colors: [AppTheme.accent, AppTheme.accent.withValues(alpha: 0.7)]),
+                                    decoration: const BoxDecoration(
+                                      gradient: LinearGradient(colors: [Color(0xFF0055FF), Color(0xFF0EA5E9)]),
                                     ),
                                   ),
                                 Container(
@@ -360,6 +363,11 @@ class _MainScreenState extends State<MainScreen> {
                                         selectedIcon: const Icon(Icons.history),
                                         label: Text(l10n.history),
                                       ),
+                                      const NavigationRailDestination(
+                                        icon: Icon(Icons.chat_bubble_outline_rounded),
+                                        selectedIcon: Icon(Icons.chat_bubble_rounded),
+                                        label: Text('Chats'),
+                                      ),
                                       NavigationRailDestination(
                                         icon: const Icon(Icons.settings_outlined),
                                         selectedIcon: const Icon(Icons.settings),
@@ -405,6 +413,12 @@ class _MainScreenState extends State<MainScreen> {
                                           icon: const Icon(Icons.home_work_outlined),
                                           selectedIcon: const Icon(Icons.home_work),
                                           label: const Text('My Home'),
+                                        ),
+                                      if (!isGuest)
+                                        const NavigationRailDestination(
+                                          icon: Icon(Icons.chat_bubble_outline_rounded),
+                                          selectedIcon: Icon(Icons.chat_bubble_rounded),
+                                          label: Text('Chats'),
                                         ),
                                       NavigationRailDestination(
                                         icon: const Icon(Icons.settings_outlined),
@@ -672,6 +686,7 @@ class _MainScreenState extends State<MainScreen> {
           {'icon': Icons.flash_on_outlined, 'activeIcon': Icons.flash_on, 'label': 'Leads'},
           {'icon': Icons.payments_outlined, 'activeIcon': Icons.payments, 'label': 'Earnings'},
           {'icon': Icons.history_rounded, 'activeIcon': Icons.history, 'label': l10n.history},
+          {'icon': Icons.chat_bubble_outline_rounded, 'activeIcon': Icons.chat_bubble_rounded, 'label': 'Chats'},
           {'icon': Icons.settings_outlined, 'activeIcon': Icons.settings, 'label': l10n.settings},
           if (_isAdmin) {'icon': Icons.admin_panel_settings_outlined, 'activeIcon': Icons.admin_panel_settings, 'label': 'Admin'},
       ]
@@ -681,6 +696,7 @@ class _MainScreenState extends State<MainScreen> {
           {'icon': Icons.group_outlined, 'activeIcon': Icons.group, 'label': l10n.contractors},
           if (!isGuest) {'icon': Icons.shopping_bag_outlined, 'activeIcon': Icons.shopping_bag, 'label': l10n.history},
           if (!isGuest) {'icon': Icons.home_work_outlined, 'activeIcon': Icons.home_work, 'label': 'My Home'},
+          if (!isGuest) {'icon': Icons.chat_bubble_outline_rounded, 'activeIcon': Icons.chat_bubble_rounded, 'label': 'Chats'},
           {'icon': Icons.settings_outlined, 'activeIcon': Icons.settings, 'label': l10n.settings},
           if (_isAdmin) {'icon': Icons.admin_panel_settings_outlined, 'activeIcon': Icons.admin_panel_settings, 'label': 'Admin'},
       ];

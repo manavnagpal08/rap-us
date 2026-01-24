@@ -449,6 +449,14 @@ class DatabaseService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
+  Stream<List<Map<String, dynamic>>> getUserChats(String uid) {
+    return _db.collection('group_chats')
+        .where('members', arrayContains: uid)
+        .orderBy('lastTimestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList());
+  }
+
   // AI Accuracy & Change Orders
   Future<void> completeJobWithAccuracy(String jobId, double finalCost) async {
     final docRef = _db.collection('jobs').doc(jobId);

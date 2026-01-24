@@ -120,10 +120,10 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.1),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.engineering_rounded, size: 80, color: Colors.orange),
+                        child: Icon(Icons.engineering_rounded, size: 80, color: Theme.of(context).colorScheme.primary),
                       ),
                     ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 2000.ms),
                     const SizedBox(height: 48),
