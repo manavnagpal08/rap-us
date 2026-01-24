@@ -11,13 +11,15 @@ class ServicesInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color textColor = Theme.of(context).colorScheme.onSurface;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('Our Services', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Text('Our Services', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: textColor)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: textColor),
       ),
       body: Stack(
         children: [
@@ -30,7 +32,7 @@ class ServicesInfoScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
+                    _buildHeader(context),
                     const SizedBox(height: 48),
                     _buildServiceGrid(context),
                   ],
@@ -43,13 +45,14 @@ class ServicesInfoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final Color textColor = Theme.of(context).colorScheme.onSurface;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Expert Craftsmanship", style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text("Expert Craftsmanship", style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: textColor)),
         const SizedBox(height: 8),
-        Text("From planning to execution, we provide end-to-end management for all your home improvement needs.", style: GoogleFonts.inter(fontSize: 16, color: Colors.white70)),
+        Text("From planning to execution, we provide end-to-end management for all your home improvement needs.", style: GoogleFonts.inter(fontSize: 16, color: textColor.withValues(alpha: 0.7))),
         const SizedBox(height: 16),
         Container(width: 60, height: 4, decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(2))),
       ],
@@ -75,14 +78,16 @@ class ServicesInfoScreen extends StatelessWidget {
 
   Widget _buildServiceCard(BuildContext context, Map<String, dynamic> s) {
     final bool isSelected = s['title'] == selectedService;
+    final Color textColor = Theme.of(context).colorScheme.onSurface;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
       width: 400, // Fixed width for wrap
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
+        color: isSelected ? textColor.withValues(alpha: 0.08) : textColor.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isSelected ? AppTheme.accent : Colors.white.withValues(alpha: 0.1), width: isSelected ? 2 : 1),
+        border: Border.all(color: isSelected ? AppTheme.accent : textColor.withValues(alpha: 0.1), width: isSelected ? 2 : 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,9 +98,9 @@ class ServicesInfoScreen extends StatelessWidget {
             child: Icon(s['icon'] as IconData, color: AppTheme.accent, size: 32),
           ),
           const SizedBox(height: 24),
-          Text(s['title'] as String, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(s['title'] as String, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(height: 12),
-          Text(s['desc'] as String, style: GoogleFonts.inter(fontSize: 15, color: Colors.white60, height: 1.5)),
+          Text(s['desc'] as String, style: GoogleFonts.inter(fontSize: 15, color: textColor.withValues(alpha: 0.6), height: 1.5)),
           const SizedBox(height: 24),
           InkWell(
             onTap: () {

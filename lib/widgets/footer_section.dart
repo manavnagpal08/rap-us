@@ -256,12 +256,6 @@ class FooterSection extends StatelessWidget {
             onTap: () {
                if (link == "About Us") {
                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutRapScreen()));
-               } else if (link == "Our Team") {
-                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyInfoScreen(title: "Our Team", type: "team")));
-               } else if (link == "Careers") {
-                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyInfoScreen(title: "Careers", type: "careers")));
-               } else if (link == "Press") {
-                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyInfoScreen(title: "Press", type: "press")));
                } else if (link == "Contact") {
                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen()));
                } else if (title == "Services") {
