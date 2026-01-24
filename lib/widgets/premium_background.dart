@@ -18,7 +18,7 @@ class PremiumBackground extends StatelessWidget {
           color: Theme.of(context).scaffoldBackgroundColor,
         ),
         
-        // Blob 1 - Top Left (Blue-ish)
+        // Blob 1 - Top Left (Brand Orange)
         Positioned(
           top: -100,
           left: -100,
@@ -27,14 +27,14 @@ class PremiumBackground extends StatelessWidget {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF0055FF).withValues(alpha: isDark ? 0.15 : 0.08),
+              color: const Color(0xFFE96D3B).withValues(alpha: isDark ? 0.12 : 0.08),
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true))
            .scale(begin: const Offset(1,1), end: const Offset(1.5,1.5), duration: 5.seconds)
            .moveX(begin: 0, end: 50, duration: 4.seconds),
         ),
 
-        // Blob 2 - Center Right (Cyan-ish)
+        // Blob 2 - Center Right (Sky Blue)
         Positioned(
           top: 200,
           right: -50,
@@ -43,14 +43,14 @@ class PremiumBackground extends StatelessWidget {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.1 : 0.05),
+              color: const Color(0xFF0EA5E9).withValues(alpha: isDark ? 0.1 : 0.05),
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true))
            .scale(begin: const Offset(1,1), end: const Offset(1.2,1.2), duration: 7.seconds)
            .moveY(begin: 0, end: -100, duration: 6.seconds),
         ),
 
-        // Blob 3 - Bottom Left (Purple-ish)
+        // Blob 3 - Bottom Left (Deep Indigo / Neutral)
         Positioned(
           bottom: -50,
           left: 0,
@@ -59,7 +59,7 @@ class PremiumBackground extends StatelessWidget {
             height: 350,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.purple.withValues(alpha: isDark ? 0.15 : 0.05),
+              color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.12 : 0.05),
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true))
             .moveY(begin: 0, end: 50, duration: 8.seconds),

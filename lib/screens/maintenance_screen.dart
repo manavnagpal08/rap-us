@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:rap_app/services/database_service.dart';
 import 'package:rap_app/widgets/premium_background.dart';
 import 'package:rap_app/theme/app_theme.dart';
+import 'package:rap_app/screens/login_screen.dart';
 
 class MaintenanceScreen extends StatefulWidget {
   final String message;
@@ -90,6 +91,16 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
     );
   }
 
+  int _secretTapCount = 0;
+
+  void _handleSecretTap() {
+    setState(() => _secretTapCount++);
+    if (_secretTapCount >= 7) {
+      _secretTapCount = 0;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,13 +115,16 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+                    GestureDetector(
+                      onTap: _handleSecretTap,
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.engineering_rounded, size: 80, color: Colors.orange),
                       ),
-                      child: const Icon(Icons.engineering_rounded, size: 80, color: Colors.orange),
                     ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 2000.ms),
                     const SizedBox(height: 48),
                     Text(
@@ -134,7 +148,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                       ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 48),
                     Text(
                       'RAP Precision © 2026',
                       style: GoogleFonts.inter(fontSize: 12, color: Theme.of(context).hintColor.withValues(alpha: 0.5)),

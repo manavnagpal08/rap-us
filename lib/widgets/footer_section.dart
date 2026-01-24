@@ -5,6 +5,9 @@ import 'package:rap_app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:rap_app/screens/legal_screen.dart';
 import 'package:rap_app/screens/about_rap_screen.dart';
+import 'package:rap_app/screens/company_info_screen.dart';
+import 'package:rap_app/screens/services_info_screen.dart';
+import 'package:rap_app/screens/support_screen.dart';
 
 class FooterSection extends StatelessWidget {
   const FooterSection({super.key});
@@ -15,7 +18,7 @@ class FooterSection extends StatelessWidget {
     const Color footerBg = Color(0xFF0F172A); // Dark Slate Blue
     const Color textColor = Color(0xFF94A3B8); // Slate 400
     const Color linkColor = Colors.white;
-    const Color accentColor = Color(0xFFE96D3B); // The Orange from their brand
+    const Color accentColor = AppTheme.accent; // Using the theme accent color
 
     return Container(
       color: footerBg,
@@ -253,6 +256,16 @@ class FooterSection extends StatelessWidget {
             onTap: () {
                if (link == "About Us") {
                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutRapScreen()));
+               } else if (link == "Our Team") {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyInfoScreen(title: "Our Team", type: "team")));
+               } else if (link == "Careers") {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyInfoScreen(title: "Careers", type: "careers")));
+               } else if (link == "Press") {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CompanyInfoScreen(title: "Press", type: "press")));
+               } else if (link == "Contact") {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportScreen()));
+               } else if (title == "Services") {
+                 Navigator.push(context, MaterialPageRoute(builder: (_) => ServicesInfoScreen(selectedService: link)));
                } else {
                  ScaffoldMessenger.of(context).showSnackBar(
                    SnackBar(content: Text('Navigate to $link (Coming Soon)'), duration: const Duration(seconds: 1)),

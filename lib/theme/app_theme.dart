@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppTheme {
   // Luxury SaaS Palette
   static const Color primary = Color(0xFF0F172A); // Slate 900
-  static const Color accent = Color(0xFF6366F1);  // Indigo 500
+  static const Color accent = Color(0xFFE96D3B);  // RAP Orange
   static const Color secondary = Color(0xFF0EA5E9); // Sky 500
   static const Color success = Color(0xFF10B981);  // Emerald 500
   static const Color successColor = Color(0xFF10B981);

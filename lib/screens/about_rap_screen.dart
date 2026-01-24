@@ -58,7 +58,7 @@ class AboutRapScreen extends StatelessWidget {
                     // Mission Content
                     _buildSectionTitle("Our Mission"),
                     _buildParagraph(
-                      "At RAP Colorado, we are dedicated to transforming the construction and home improvement industry through transparency, reliability, and professional excellence. our goal is to bridge the gap between homeowners and skilled artisans, ensuring every project is completing with the highest standards of quality."
+                      "At RAP Colorado, we are dedicated to transforming the construction and home improvement industry through transparency, reliability, and professional excellence. Our goal is to bridge the gap between homeowners and skilled artisans, ensuring every project is completed with the highest standards of quality."
                     ),
                     const SizedBox(height: 48),
 
