@@ -29,7 +29,7 @@ class ChatService {
 
     // Update last message in chat document for list view previews
     final Map<String, dynamic> updateData = {
-      'lastMessage': content,
+      'lastMessage': type == 'image' ? '📷 Photo' : content,
       'lastTimestamp': FieldValue.serverTimestamp(),
       'participants': chatId.split('_'),
     };
