@@ -101,6 +101,8 @@ class DatabaseService {
     await _db.collection('contractors').doc(user.uid).set({
       ...contractorData,
       'userId': user.uid,
+      'fullName': user.displayName ?? 'Professional',
+      'email': user.email,
       'createdAt': FieldValue.serverTimestamp(),
       'isVerified': false,
     });

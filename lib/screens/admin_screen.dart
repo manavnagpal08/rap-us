@@ -456,6 +456,14 @@ class _AdminScreenState extends State<AdminScreen> {
                                   fontSize: 18,
                                 ),
                               ),
+                              if (c['fullName'] != null)
+                                Text(
+                                  c['fullName'],
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: Theme.of(context).hintColor,
+                                  ),
+                                ),
                               Text(
                                 c['category'] ?? 'General Contractor',
                                 style: GoogleFonts.inter(

@@ -403,6 +403,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
+                Text(
+                  c['fullName'] ?? 'RAP Professional',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Theme.of(context).hintColor,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   c['category'].toString().toUpperCase(),
